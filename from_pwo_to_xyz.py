@@ -47,15 +47,15 @@ def ibrav(i, a):
       return 'stai sbagliando'
    
 def read_info(fin):
-   for line in fin.read().split('\n'):
-      if 'number of atoms/cell' in line:
-         match_n_at = re.search(r'-?\d+(\.\d+)?', line)
+   for i in fin:
+      if 'number of atoms/cell' in i:
+         match_n_at = re.search(r'-?\d+(\.\d+)?', i)
          n_at = int(match_n_at.group())
-      if 'bravais-lattice index' in line:
-         match_bli = re.search(r'-?\d+(\.\d+)?', line)
+      if 'bravais-lattice index' in i:
+         match_bli = re.search(r'-?\d+(\.\d+)?', i)
          bravais = int(match_bli.group())
-      if 'lattice parameter' in line:
-         match_lp = re.search(r'-?\d+(\.\d+)?', line)
+      if 'lattice parameter' in i:
+         match_lp = re.search(r'-?\d+(\.\d+)?', i)
          lattice_param = float(match_lp.group())
    return [n_at, bravais, lattice_param]
 
@@ -65,38 +65,44 @@ def first_two_lines(fin):
 
 def gen_list_for_xyz(filein):
    fin = open(filein, 'r')
-   fstored = first_two_lines(fin)
-   print(fstored)
+   store = []
+   for line in fin.read().split('\n'):
+      store.append(line)
    fin.close()
 
-   '''natomi = n_at
-   altratab = []
+   fstored = first_two_lines(store)
+   t = 0
+   n_at = fstored[0]
    ctrl = 0
    counter = 0
-   for line in fstored:
-      if ctrl == natomi+1:
+   for i in store:
+      if 'time      =   ' in i:
+         match_t = re.search(r'-?\d+(\.\d+)?', i)
+         t = float(match_t.group())
+      if 'Entering Dynamics:    iteration =' in i:
+         match_N = re.search(r'-?\d+(\.\d+)?', i)
+         N = int(match_N.group())
+      if ctrl > n_at:
          ctrl = 0
-      if ctrl>0:
-         altratab.append(line)#.split('\n')
+         fstored.append('\n')
+      if ctrl > 0:
+         fstored.append(i)
          ctrl += 1
-      if 'ATOMIC_POSITION' in line:
-         #altratab.append(line)
+      if 'ATOMIC_POSITIONS' in i:
+         fstored.append(n_at)
+         if N == 1:
+            fstored[1] = f'- t = {t} ps (iter. {N}) -' + fstored[1]
+         else:
+            fstored.append(f'- t = {t} ps (iter. {N}) -')
          ctrl = 1
          counter += 1
-         altratab.append(natomi)
-         altratab.append(float(counter))
-
-   altratab.append(' ')
-   return altratab'''
-   return
+   return(fstored)
 
 
-#file_to_open=input('Insert filename: ')
-file_to_open = 'test.pwo'
-gen_list_for_xyz(file_to_open)
+#file_to_open=str(input('Insert filename: ____.pwo '))
+file_to_open = 'test'
 
-'''fout=open(str(file_to_open), "w+")
+fout=open(file_to_open + '.xyz', "w+")
 
-fout.writelines(["%s\n" % i  for i in gen_list_for_xyz(str(file_to_open)+"/"+str(file_to_open)+".pwo", 212)])
+fout.writelines(["%s\n" % i  for i in gen_list_for_xyz(file_to_open + '.pwo')])
 fout.close()
-fout.close()'''
