@@ -89,10 +89,10 @@ def gen_list_for_xyz(filein):
          fstored.append(i)
          ctrl += 1
       if 'ATOMIC_POSITIONS' in i:
-         fstored.append(n_at)
          if N == 1:
             fstored[1] = f'- t = {t} ps (iter. {N}) -' + fstored[1]
          else:
+            fstored.append(n_at)
             fstored.append(f'- t = {t} ps (iter. {N}) -')
          ctrl = 1
          counter += 1
