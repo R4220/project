@@ -84,7 +84,6 @@ def gen_list_for_xyz(filein):
          N = int(match_N.group())
       if ctrl > n_at:
          ctrl = 0
-         fstored.append('\n')
       if ctrl > 0:
          fstored.append(i)
          ctrl += 1
@@ -99,8 +98,8 @@ def gen_list_for_xyz(filein):
    return(fstored)
 
 
-#file_to_open=str(input('Insert filename: ____.pwo '))
-file_to_open = 'test'
+file_to_open=str(input('Insert filename: ____.pwo \n'))
+#file_to_open = 'test'
 
 fout=open(file_to_open + '.xyz', "w+")
 
