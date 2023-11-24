@@ -47,19 +47,23 @@ def write_gdr(self, N, T, rho, gdr_out='gdr.out'):
       savetxt(gdr_out, gout , fmt=('%12.7g ','%12.7g'), header="    'r'     'g(r)'" ) 
 
 def gen_list_of_atoms(filein):
-  fin = open(filein, 'r')
-  store = []
-  for line in fin.read().split('\n'):
+   fin = open(filein, 'r')
+   store = []
+   for line in fin.read().split('\n'):
       store.append(line)
-  fin.close()
-  n_at = store[0]
-  blocks = []
-  for i in range(np.size(store)):
-    if f'{n_at}\n' in store[i]:
-      blocks.append(store[i+2, i+2+n_at])
-  print(blocks)
+   fin.close()
+   n_at = int(store[0])
+   if store[-1] == '':
+      store = store[:-1]
+   N_iter = int(np.size(store)/(n_at + 2))
+   # aggiungi assert che N_iter deve essere intero
+   blocks = []
+   for i in range(N_iter):
+      j = int(i * (n_at + 2))
+      blocks.append(store[j + 2: j + 2 + n_at])
+   return blocks
 
-  '''fstored = first_two_lines(store)
+   '''fstored = first_two_lines(store)
    t = 0
    n_at = fstored[0]
    ctrl = 0
@@ -85,9 +89,10 @@ def gen_list_of_atoms(filein):
          ctrl = 1
          counter += 1
    return(fstored)         '''
-  return
+   return
 
 
-file_to_open=str(input('Insert filename: ____.xyz \n'))
+#file_to_open=str(input('Insert filename: ____.xyz \n'))
+file_to_open = 'CH4'
 
 gen_list_of_atoms(file_to_open+'.xyz')
