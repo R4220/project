@@ -2,49 +2,49 @@ import re
 
 def ibrav(i, a):
    if i == 0 : 
-      return 'Free'
+      return '  Free'  
    elif i == 1 :
-      return 'Cubic (sc)'
+      return '  Cubic (sc)'  
    elif i == 2 :
-      return 'Cubic (fcc)'
+      return '  Cubic (fcc)'  
    elif i == 3 :
-      return 'Cubic (bcc)'
+      return f'  Cubic (bcc): V1 = {a/2}(1, 1, 1), V2 = {a/2}(-1, 1, 1), V3 = {a/2}(-1, -1, 1)'  
    elif i == -3:
-      return 'Cubic (bcc)'
+      return '  Cubic (bcc)'  
    elif i == 4 :
-      return f'hexagonal: V1 = {a}(1, 0, 0), V2 = {a}(-1/2, sqrt(3)/2, 0), V3 = (0, 0, c)'
+      return f'  Hexagonal: V1 = {a}(1, 0, 0), V2 = {a}(-1/2, sqrt(3)/2, 0), V3 = (0, 0, c)'  
    elif i == 5 :
-      return 'Trigonal'
+      return '  Trigonal'  
    elif i == -5 :
-      return 'Trigonal'
+      return '  Trigonal'  
    elif i == 6 :
-      return 'Tetragonal (st)'
+      return '  Tetragonal (st)'  
    elif i == 7 :
-      return 'Tetragonal (bct)'
+      return '  Tetragonal (bct)'  
    elif i == 8 :
-      return 'Orthorhombic'
+      return '  Orthorhombic'  
    elif i == 9 :
-      return 'Orthorhombic (bco)'
+      return '  Orthorhombic (bco)'  
    elif i == -9 :
-      return 'Orthorhombic (bco)'
+      return '  Orthorhombic (bco)'  
    elif i == 91 :
-      return 'Orthorhombic one-face base-centered'
+      return '  Orthorhombic one-face base-centered'  
    elif i == 10 :
-      return 'Orthorhombic face-centered'
+      return '  Orthorhombic face-centered'  
    elif i == 11 :
-      return 'Orthorhombic body-centered' 
+      return '  Orthorhombic body-centered'   
    elif i == 12 : 
-      return 'Monoclinic'
+      return '  Monoclinic'  
    elif i == -12 :
-      return 'Monoclinic'
+      return '  Monoclinic'  
    elif i == 13 :
-      return 'Monoclinic (bc)'
+      return '  Monoclinic (bc)'  
    elif i == -13 :
-      return 'Monoclinic (bc)'
+      return '  Monoclinic (bc)'  
    elif i == 14 :
-      return 'Triclinic'
+      return '  Triclinic'  
    else :
-      return 'stai sbagliando'
+      return '  stai sbagliando'  
    
 def read_info(fin):
    for i in fin:
