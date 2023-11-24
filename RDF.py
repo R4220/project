@@ -1,6 +1,11 @@
 #calcolo gdr
-  def calcgdr(self, N ):
-    from numpy import sqrt, rint, zeros, int_
+from numpy import sqrt, rint, zeros, int_
+import re
+import numpy as np
+
+
+
+def calcgdr(self, N ):
     for k in range(N-1) :
         j=k+1
         #for j in range(k+1,N) :
@@ -28,7 +33,7 @@
 
 
 # normalizzazione - gdr 
-  def write_gdr(self, N, T, rho, gdr_out='gdr.out'):
+def write_gdr(self, N, T, rho, gdr_out='gdr.out'):
       """ here L and rho from time averages ? """
       from numpy import zeros, pi, savetxt, column_stack
       V = zeros(self.kg) 
@@ -39,4 +44,50 @@
           g[lm] = self.gcount[lm]/(V[lm]*(N -1)*T*rho);
           r[lm] = (lm+0.5)*self.ldel
       gout = column_stack( (r, g) )
-      savetxt(gdr_out, gout , fmt=('%12.7g ','%12.7g'), header="    'r'     'g(r)'" )          
+      savetxt(gdr_out, gout , fmt=('%12.7g ','%12.7g'), header="    'r'     'g(r)'" ) 
+
+def gen_list_of_atoms(filein):
+  fin = open(filein, 'r')
+  store = []
+  for line in fin.read().split('\n'):
+      store.append(line)
+  fin.close()
+  n_at = store[0]
+  blocks = []
+  for i in range(np.size(store)):
+    if f'{n_at}\n' in store[i]:
+      blocks.append(store[i+2, i+2+n_at])
+  print(blocks)
+
+  '''fstored = first_two_lines(store)
+   t = 0
+   n_at = fstored[0]
+   ctrl = 0
+   counter = 0
+   for i in store:
+      if 'time      =   ' in i:
+         match_t = re.search(r'-?\d+(\.\d+)?', i)
+         t = float(match_t.group())
+      if 'Entering Dynamics:    iteration =' in i:
+         match_N = re.search(r'-?\d+(\.\d+)?', i)
+         N = int(match_N.group())
+      if ctrl > n_at:
+         ctrl = 0
+      if ctrl > 0:
+         fstored.append(i)
+         ctrl += 1
+      if 'ATOMIC_POSITIONS' in i:
+         if N == 1:
+            fstored[1] = f'- t = {t} ps (iter. {N}) -' + fstored[1]
+         else:
+            fstored.append(n_at)
+            fstored.append(f'- t = {t} ps (iter. {N}) -')
+         ctrl = 1
+         counter += 1
+   return(fstored)         '''
+  return
+
+
+file_to_open=str(input('Insert filename: ____.xyz \n'))
+
+gen_list_of_atoms(file_to_open+'.xyz')
