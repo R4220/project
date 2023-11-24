@@ -3,35 +3,6 @@ from numpy import sqrt, rint, zeros, int_
 import re
 import numpy as np
 
-
-
-def calcgdr(self, N ):
-    for k in range(N-1) :
-        j=k+1
-        #for j in range(k+1,N) :
-        #  rx,ry,rz  reduced coordinates  x/L,y/L,z/L  , L = length of cubic box
-        dx = self.rx[k]-self.rx[j:N]
-        dy = self.ry[k]-self.ry[j:N]
-        dz = self.rz[k]-self.rz[j:N]
-        # Periodic boundary conditions    
-        dx[...]-= rint(dx)
-        dy[...]-= rint(dy)
-        dz[...]-= rint(dz)
-        dx[...] = dx*self.L
-        dy[...] = dy*self.L
-        dz[...] = dz*self.L
-        r2 = dx*dx + dy*dy + dz*dz
-        # using the mask array "b" for speedup
-        b = r2 < self.r2max
-        lm  = sqrt(r2[b])
-        #if lm<self.kg :
-        for elm in lm :
-            self.gcount[int(elm/self.ldel)]+=2.  # factor of 2 for gdr normalization
-    #return
-
-
-
-
 # normalizzazione - gdr 
 def write_gdr(self, N, T, rho, gdr_out='gdr.out'):
       """ here L and rho from time averages ? """
@@ -41,7 +12,7 @@ def write_gdr(self, N, T, rho, gdr_out='gdr.out'):
       g = zeros(self.kg) 
       for lm in range(self.kg) :
           V[lm] = 4./3.*pi*(self.ldel**3)*(3*lm*lm +3*lm + 1); 
-          g[lm] = self.gcount[lm]/(V[lm]*(N -1)*T*rho);
+          g[lm] = self.gcount[lm]/(V[lm]*(N -1)*T*rho)
           r[lm] = (lm+0.5)*self.ldel
       gout = column_stack( (r, g) )
       savetxt(gdr_out, gout , fmt=('%12.7g ','%12.7g'), header="    'r'     'g(r)'" ) 
@@ -70,16 +41,72 @@ def atomic_species(block):
       atom = re.sub(r'[^a-zA-Z]', '', block[i])
       if atom not in species:
          species.append(atom)
-         indices.append([i+1])
+         indices.append([i])
       else:
          j = species.index(atom)
-         indices[j].append(i+1)
+         indices[j].append(i)
    return [species, indices]
-         
-    
+
+def selection_of_couples(atoms):
+   print('The aviable atomic species are:', atoms)
+   for i in atoms:
+      print(i)
+   print('Choose two of them (including also duplicates if you want)')
+   at_1 = str(input())
+   at_1 = re.sub(r'[^a-zA-Z]', '', at_1)
+   at_2 = str(input())  
+   at_2 = re.sub(r'[^a-zA-Z]', '', at_2) 
+   if at_1 == at_2:
+      return[[atoms.index(at_1)], 0]
+   else:
+      return [[atoms.index(at_1), atoms.index(at_2)], 1]
+
+def setup(Block):
+   at, ind = atomic_species(Block)
+   chosen_atoms, e = selection_of_couples(at)
+   #print(ind)
+   #print(chosen_atoms)
+   chosen_indices = [ind[i] for i in chosen_atoms]
+   #print(chosen_indices)
+   return [chosen_indices, e]
+
+def coordinates(Block, ind):
+    positions = [Block[i] for i in ind]
+    for idx, i in enumerate(positions):
+        matches = re.findall(r'-?\d+(\.\d+)?', i)
+        positions[idx] = [float(match) for match in matches[:3]]
+    #print(positions)
+    return positions
+
+def RDF(Block, ind, e, r_max):
+   dist = []
+   if e == 0 : # same species
+      ind = ind[0]
+      pos = np.array(coordinates(Block, ind))
+      N = len(pos)
+      print(N)
+      for k in range(N-1) :
+         for j in range(k + 1, N):
+            print(k, '  ', j)
+            r = np.linalg.norm(pos[k]-pos[j])
+            if r < r_max:
+               dist.append(r)  
+   else:
+      ind_1 = ind[0]
+      ind_2 = ind[1]
+      pos_1 = np.array(coordinates(Block, ind_1))
+      pos_2 = np.array(coordinates(Block, ind_2))
+      for i in pos_1:
+         for j in pos_2:
+            r = np.linalg.norm(i - j)
+            if r < r_max:
+               dist.append(r)
+   return dist
 
 #file_to_open=str(input('Insert filename: ____.xyz \n'))
-file_to_open = 'CH4'
+file_to_open = 'test'
 
 Blocks = gen_list_of_atoms(file_to_open+'.xyz')
-print(atomic_species(Blocks[0]))
+ind, e = setup(Blocks[0])
+r_max = float(input('Instert Rmax:\n'))
+print(RDF(Blocks[0], ind, e, r_max))
