@@ -4,7 +4,7 @@ def ibrav(i, a):
    if i == 0 : 
       return '  Free'  
    elif i == 1 :
-      return '  Cubic (sc)'  
+      return f'  Cubic (sc): V1 = {a}(1, 0, 0), V2 = {a}(0, 1, 0), V3 = {a}(0, 0, 1)'  
    elif i == 2 :
       return '  Cubic (fcc)'  
    elif i == 3 :
