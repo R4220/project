@@ -63,36 +63,23 @@ def gen_list_of_atoms(filein):
       blocks.append(store[j + 2: j + 2 + n_at])
    return blocks
 
-   '''fstored = first_two_lines(store)
-   t = 0
-   n_at = fstored[0]
-   ctrl = 0
-   counter = 0
-   for i in store:
-      if 'time      =   ' in i:
-         match_t = re.search(r'-?\d+(\.\d+)?', i)
-         t = float(match_t.group())
-      if 'Entering Dynamics:    iteration =' in i:
-         match_N = re.search(r'-?\d+(\.\d+)?', i)
-         N = int(match_N.group())
-      if ctrl > n_at:
-         ctrl = 0
-      if ctrl > 0:
-         fstored.append(i)
-         ctrl += 1
-      if 'ATOMIC_POSITIONS' in i:
-         if N == 1:
-            fstored[1] = f'- t = {t} ps (iter. {N}) -' + fstored[1]
-         else:
-            fstored.append(n_at)
-            fstored.append(f'- t = {t} ps (iter. {N}) -')
-         ctrl = 1
-         counter += 1
-   return(fstored)         '''
-   return
-
+def atomic_species(block):
+   species = []
+   indices = []
+   for i in range(np.size(block)):
+      atom = re.sub(r'[^a-zA-Z]', '', block[i])
+      if atom not in species:
+         species.append(atom)
+         indices.append([i+1])
+      else:
+         j = species.index(atom)
+         indices[j].append(i+1)
+   return [species, indices]
+         
+    
 
 #file_to_open=str(input('Insert filename: ____.xyz \n'))
 file_to_open = 'CH4'
 
-gen_list_of_atoms(file_to_open+'.xyz')
+Blocks = gen_list_of_atoms(file_to_open+'.xyz')
+print(atomic_species(Blocks[0]))
