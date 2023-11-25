@@ -1,5 +1,6 @@
 import re
-
+#da inserire eventuali altri lat par, o volume e finire gli alòtri casi
+#fai dizionario
 def ibrav(i, a):
    if i == 0 : 
       return '  Free'  

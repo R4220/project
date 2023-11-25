@@ -37,7 +37,7 @@ def gen_list_of_atoms(filein):
 def atomic_species(block):
    species = []
    indices = []
-   for i in range(np.size(block)):
+   for i in range(np.size(block)):#enumerate
       atom = re.sub(r'[^a-zA-Z]', '', block[i])
       if atom not in species:
          species.append(atom)
@@ -103,8 +103,8 @@ def RDF(Block, ind, e, r_max):
                dist.append(r)
    return dist
 
-#file_to_open=str(input('Insert filename: ____.xyz \n'))
-file_to_open = 'test'
+file_to_open=str(input('Insert filename: ____.xyz \n'))
+#file_to_open = 'test'
 
 Blocks = gen_list_of_atoms(file_to_open+'.xyz')
 ind, e = setup(Blocks[0])
