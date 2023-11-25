@@ -1,7 +1,8 @@
 #calcolo gdr
-from numpy import sqrt, rint, zeros, int_
 import re
 import numpy as np
+from numpy import pi, sqrt, rint, zeros, int_
+import matplotlib.pyplot as plt
 
 # normalizzazione - gdr 
 def write_gdr(self, N, T, rho, gdr_out='gdr.out'):
@@ -17,6 +18,8 @@ def write_gdr(self, N, T, rho, gdr_out='gdr.out'):
       gout = column_stack( (r, g) )
       savetxt(gdr_out, gout , fmt=('%12.7g ','%12.7g'), header="    'r'     'g(r)'" ) 
 
+
+#generazione lisa con screenshot ai vari t
 def gen_list_of_atoms(filein):
    fin = open(filein, 'r')
    store = []
@@ -34,6 +37,7 @@ def gen_list_of_atoms(filein):
       blocks.append(store[j + 2: j + 2 + n_at])
    return blocks
 
+# identifica le specie chimiche nel file di input
 def atomic_species(block):
    species = []
    indices = []
@@ -47,8 +51,9 @@ def atomic_species(block):
          indices[j].append(i)
    return [species, indices]
 
+# selezione delle specie chimiche da considerare
 def selection_of_couples(atoms):
-   print('The aviable atomic species are:', atoms)
+   print('The aviable atomic species are:')
    for i in atoms:
       print(i)
    print('Choose two of them (including also duplicates if you want)')
@@ -61,6 +66,7 @@ def selection_of_couples(atoms):
    else:
       return [[atoms.index(at_1), atoms.index(at_2)], 1]
 
+# definizione del setup
 def setup(Block):
    at, ind = atomic_species(Block)
    chosen_atoms, e = selection_of_couples(at)
@@ -70,27 +76,32 @@ def setup(Block):
    #print(chosen_indices)
    return [chosen_indices, e]
 
+# estrazione delle coordinate degli atomi
 def coordinates(Block, ind):
     positions = [Block[i] for i in ind]
     for idx, i in enumerate(positions):
-        matches = re.findall(r'-?\d+(\.\d+)?', i)
-        positions[idx] = [float(match) for match in matches[:3]]
+        matches = re.findall(r'(-?\d+(\.\d+)?)', i)
+        #print(matches)
+        positions[idx] = [float(match[0]) for match in matches[:3]]
     #print(positions)
     return positions
 
+# calcolo le varie distanze di un blocco
 def RDF(Block, ind, e, r_max):
    dist = []
    if e == 0 : # same species
       ind = ind[0]
+      #print(Block)
       pos = np.array(coordinates(Block, ind))
       N = len(pos)
-      print(N)
+      #print(pos)
       for k in range(N-1) :
          for j in range(k + 1, N):
-            print(k, '  ', j)
+            #print(k, '  ', j)
             r = np.linalg.norm(pos[k]-pos[j])
             if r < r_max:
                dist.append(r)  
+               #print(pos[k], '\n', pos[j], '\n', pos[k]-pos[j], '\n', np.linalg.norm(pos[k]-pos[j]), '\n')
    else:
       ind_1 = ind[0]
       ind_2 = ind[1]
@@ -101,12 +112,40 @@ def RDF(Block, ind, e, r_max):
             r = np.linalg.norm(i - j)
             if r < r_max:
                dist.append(r)
+   dist = np.sort(dist)
    return dist
+
+def istogram(Blocks, ind, e, r_max, N):
+   count = np.zeros(500)
+   for i in Blocks:
+      d = RDF(i, ind, e, r_max)
+      count += np.histogram(d, bins=N, range=(0, r_max))[0]
+   norm, R = normalize(N, r_max)
+   count = np.divide(count, norm )
+   return [R, count]
+
+def normalize(N_bin, r_max):
+   R = np.linspace(0, r_max, N_bin)
+  # print(R)
+   dR = R[1]
+#   print(dR)
+ #  print([(i + dR)**3 - i**3 for i in R])
+   norm = np.multiply([(i + dR)**3 - i**3 for i in R], pi * 4 /3)
+   return [norm, R]
+
 
 file_to_open=str(input('Insert filename: ____.xyz \n'))
 #file_to_open = 'test'
 
 Blocks = gen_list_of_atoms(file_to_open+'.xyz')
 ind, e = setup(Blocks[0])
-r_max = float(input('Instert Rmax:\n'))
-print(RDF(Blocks[0], ind, e, r_max))
+r_max = float(input('Instert Rmax:\n')) # variabile globale?
+data = istogram(Blocks, ind, e, r_max, 500)
+
+fig = plt.figure(figsize=(6, 8))
+ax = fig.add_subplot(1, 1, 1)
+ax.plot(data[0], data[1], label = 'Power spectrum')
+ax.set_xlabel('Frequency (Hz)')
+ax.set_ylabel('Power density (V$^2$/Hz)')
+ax.grid()
+plt.show()
