@@ -1,14 +1,17 @@
 import re
 #da inserire eventuali altri lat par, o volume e finire gli alòtri casi
-#fai dizionario
-def ibrav(i, a):
+
+conversion = 0.529177249
+
+def ibrav_diz(i, a):
+    a = a * conversion
     bravais_mapping = {
         0: '  Free',
-        1: f'  Cubic (sc): V1 = {a}(1, 0, 0), V2 = {a}(0, 1, 0), V3 = {a}(0, 0, 1)',
+        1: f'  Cubic (sc): V1 = {a}(1, 0, 0) $\AA$, V2 = {a}(0, 1, 0) $\AA$, V3 = {a}(0, 0, 1) $\AA$',
         2: '  Cubic (fcc)',
-        3: f'  Cubic (bcc): V1 = {a/2}(1, 1, 1), V2 = {a/2}(-1, 1, 1), V3 = {a/2}(-1, -1, 1)',
+        3: f'  Cubic (bcc): V1 = {a/2}(1, 1, 1) $\AA$, V2 = {a/2}(-1, 1, 1) $\AA$, V3 = {a/2}(-1, -1, 1) $\AA$',
         -3: '  Cubic (bcc)',
-        4: f'  Hexagonal: V1 = {a}(1, 0, 0), V2 = {a}(-1/2, sqrt(3)/2, 0), V3 = (0, 0, c)',
+        4: f'  Hexagonal: V1 = {a}(1, 0, 0) $\AA$, V2 = {a}(-1/2, sqrt(3)/2, 0) $\AA$, V3 = (0, 0, c) $\AA$',
         5: '  Trigonal',
         -5: '  Trigonal',
         6: '  Tetragonal (st)',
@@ -27,9 +30,58 @@ def ibrav(i, a):
         -14: '  Triclinic',
     }
     return bravais_mapping.get(i, '  stai sbagliando') 
-   
+
+def ibrav(i, a, V):
+    a = a * conversion
+    V = V * conversion**3
+    if i == 0 : 
+        return '  Free'  
+    elif i == 1 :
+        return f'  Cubic (sc): V1 = {a}(1, 0, 0) Ang, V2 = {a}(0, 1, 0) Ang, V3 = {a}(0, 0, 1) Ang'  
+    elif i == 2 :
+        return '  Cubic (fcc)'  
+    elif i == 3 :
+        return f'  Cubic (bcc): V1 = {a/2}(1, 1, 1) Ang, V2 = {a/2}(-1, 1, 1) Ang, V3 = {a/2}(-1, -1, 1) Ang'  
+    elif i == -3:
+        return '  Cubic (bcc)'  
+    elif i == 4 :
+        c = V *2 / (a**2 * (sqrt(3)))
+        return f'  Hexagonal: V1 = {a}(1, 0, 0) Ang, V2 = {a}(-1/2, sqrt(3)/2, 0) Ang, V3 = {c}(0, 0, 1) Ang'  
+    elif i == 5 :
+        return '  Trigonal'  
+    elif i == -5 :
+        return '  Trigonal'  
+    elif i == 6 :
+        return '  Tetragonal (st)'  
+    elif i == 7 :
+        return '  Tetragonal (bct)'  
+    elif i == 8 :
+        return '  Orthorhombic'  
+    elif i == 9 :
+        return '  Orthorhombic (bco)'  
+    elif i == -9 :
+        return '  Orthorhombic (bco)'  
+    elif i == 91 :
+        return '  Orthorhombic one-face base-centered'  
+    elif i == 10 :
+        return '  Orthorhombic face-centered'  
+    elif i == 11 :
+        return '  Orthorhombic body-centered'   
+    elif i == 12 : 
+        return '  Monoclinic'  
+    elif i == -12 :
+        return '  Monoclinic'  
+    elif i == 13 :
+        return '  Monoclinic (bc)'  
+    elif i == -13 :
+        return '  Monoclinic (bc)'  
+    elif i == 14 :
+        return '  Triclinic'  
+    else :
+        return '  stai sbagliando'  
+ 
 def read_info(fin):
-    n_at, bravais, lattice_param = 0, 0, 0.0
+    n_at, bravais, lattice_param, V = 0, 0, 0.0
     for line in fin:
         if 'number of atoms/cell' in line:
             n_at = int(re.search(r'-?\d+(\.\d+)?', line).group())
@@ -37,11 +89,13 @@ def read_info(fin):
             bravais = int(re.search(r'-?\d+(\.\d+)?', line).group())
         elif 'lattice parameter' in line:
             lattice_param = float(re.search(r'-?\d+(\.\d+)?', line).group())
-    return n_at, bravais, lattice_param
+        elif 'unit-cell volume' in line:
+            V = float(re.search(r'-?\d+(\.\d+)?', line).group())
+    return n_at, bravais, lattice_param, V
 
 def first_two_lines(fin):
     n_at, brav, lattice_param = read_info(fin)
-    return [n_at, ibrav(brav, lattice_param)]
+    return [n_at, ibrav(brav, lattice_param, V)]
 
 def gen_list_for_xyz(filein):
     with open(filein, 'r') as fin:
