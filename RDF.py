@@ -12,7 +12,7 @@ def gen_list_of_atoms(filein):
     n_at = int(store[0])
     blocks = [store[i + 2: i + 2 + n_at] for i in range(0, len(store), n_at + 2)]    
 
-    return blocks
+    return blocks, n_at
 
 # identifica le specie chimiche nel file di input
 def atomic_species(block):
@@ -77,32 +77,38 @@ def RDF(Block, ind, e, r_max):
     dist = np.sort(dist)
     return dist
 
-def istogram(blocks, ind, e, r_max, N):
+def istogram(blocks, ind, e, r_max, N, n_at):
     count = np.zeros(500)
     R = np.linspace(0, r_max, N)
     dR = R[1]
-    norm = np.multiply([(i + dR)**3 - i**3 for i in R], np.pi * 4 /3)
+    norm = np.multiply([((i + dR)**3 - i**3) for i in R], np.pi * 4 /3)
     
     for i in blocks:
         d = RDF(i, ind, e, r_max)
         count += np.histogram(d, bins=N, range=(0, r_max))[0]
     print('distances generated')
+    n_at = sum(count)
+    V = 4 * np.pi * R[-1]
+    rho_1 = V/n_at
+    count = np.divide(count, norm) * rho_1
+
     return [R, count]
 
 
 def main():
     file_to_open = str(input('Insert filename: ____.xyz \n'))
-    blocks = gen_list_of_atoms(file_to_open + '.xyz')
+    blocks, n_at = gen_list_of_atoms(file_to_open + '.xyz')
     ind, e = setup(blocks[0])
     r_max = float(input('Insert Rmax:\n'))
-    data = istogram(blocks, ind, e, r_max, 500)
+    data = istogram(blocks, ind, e, r_max, 500, n_at)
 
-    fig = plt.figure(figsize=(6, 8))
+    fig = plt.figure(figsize=(8, 6))
     ax = fig.add_subplot(1, 1, 1)
     ax.plot(data[0], data[1], label='Power spectrum')
-    ax.set_xlabel('Frequency (Hz)')
-    ax.set_ylabel('Power density (V$^2$/Hz)')
+    ax.set_xlabel('r ($A$)')
+    ax.set_ylabel('g(r)')
     ax.grid()
+    plt.savefig(f'{file_to_open}.png')
     plt.show()
 
 if __name__ == "__main__":
