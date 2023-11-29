@@ -49,6 +49,8 @@ def setup(block):
 
 # estrazione delle coordinate degli atomi
 def coordinates(Block, ind):
+    """
+    """
     positions = [Block[i] for i in ind]
     for idx, i in enumerate(positions):
         matches = re.findall(r'(-?\d+(\.\d+)?)', i)
@@ -79,16 +81,17 @@ def RDF(Block, ind, e, r_max):
 
 def istogram(blocks, ind, e, r_max, N, n_at):
     count = np.zeros(500)
-    R = np.linspace(0, r_max, N)
+    R = np.linspace(0, r_max, N+1)
     dR = R[1]
-    norm = np.multiply([((i + dR)**3 - i**3) for i in R], np.pi * 4 /3)
+    norm = np.multiply([((i + dR)**3 - i**3) for i in R[:N]], np.pi * 4 /3)
     
     for i in blocks:
         d = RDF(i, ind, e, r_max)
         count += np.histogram(d, bins=N, range=(0, r_max))[0]
+
     print('distances generated')
-    n_at = sum(count)
-    V = 4 * np.pi * R[-1]
+    
+    V = 4 * np.pi * R[-1] #Lx, Ly, Lz
     rho_1 = V/n_at
     count = np.divide(count, norm) * rho_1
 
