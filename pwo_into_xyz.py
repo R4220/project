@@ -1,4 +1,5 @@
 # main
+import numpy as np
 
 from class_iteration import iteration
 
@@ -44,17 +45,21 @@ def xyz_gen(fout, fin):
         if 'number of atoms/cell' in line:
             iter.n_at = int(line.split()[4])
             #print(iter.n_at)
+        elif 'celldm(1)= ' in line:
+            iter.celldim = float(line.split()[1])
+            iter.Alat_to_Angstrom()
+            #print(iter.celldim)
         elif 'a(1)' in line:
             x, y, z = map(float, line.split()[3:6])
-            iter.ax = [x, y, z]
+            iter.ax = np.multiply([x, y, z], iter.alat_to_angstrom)
             #print(iter.ax)
         elif 'a(2)' in line:
             x, y, z = map(float, line.split()[3:6])
-            iter.ay = [x, y, z]
+            iter.ay = np.multiply([x, y, z], iter.alat_to_angstrom)
             #print(iter.ay)
         elif 'a(3)' in line:
             x, y, z = map(float, line.split()[3:6])
-            iter.az = [x, y, z]
+            iter.az = np.multiply([x, y, z], iter.alat_to_angstrom)
             #print(iter.az)
 
         '''defining the groups'''
@@ -82,9 +87,8 @@ def xyz_gen(fout, fin):
         '''defining the configuration at each time'''
 
         if 'Self-consistent Calculation' in line:
-            iter.first_two_lines()
             if e_gen == True:
-                iter.single_frame()
+                fout.writelines(["%s\n" % i for i in iter.single_frame()])
             e_gen = True
             e_storage = True
         elif e_storage == True:
