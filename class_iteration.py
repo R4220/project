@@ -33,6 +33,7 @@ class iteration:
     def Alat_to_Angstrom(self):
         self.alat_to_angstrom = self.celldim * self.bohr_angstrom
 
+
     '''def first_two_lines(self):
         
         This method generate the first part of the two starting line of an interation in the xyz file, accoring to the setted parameters
@@ -130,14 +131,20 @@ class iteration:
                 break
 
     def text(self):
-        text = np.array([f'{self.n_at}', f"Lattice(Ang)=\"{self.ax[0]}, {self.ax[1]}, {self.ax[2]}, {self.ay[0]}, {self.ay[1]}, {self.ay[2]}, {self.az[0]}, {self.az[1]}, {self.az[2]}\" t(ps)={self.t} Epot(eV)={self.U_pot / self.Ry_to_eV }"])
+        print('test')
+        text = f'{self.n_at}\nLattice(Ang)=\"{self.ax[0]}, {self.ax[1]}, {self.ax[2]}, {self.ay[0]}, {self.ay[1]}, {self.ay[2]}, {self.az[0]}, {self.az[1]}, {self.az[2]}\" t(ps)={self.t} Epot(eV)={self.U_pot / self.Ry_to_eV }'
         body = np.array([], dtype=str)
         for elm in self.groups:
+            #print(elm.id)
             _body = elm.generate(self.t - self.t_past)
             elm.DOF = elm.N
-            text[1] += f" Ek{elm.id_group}(ev)={elm.Ek} DOF{elm.id_group}={elm.DOF} T{elm.id_group}(K)={elm.T} Ftot{elm.id_group}(pN)=\"{elm.Ftot[0]}, {elm.Ftot[1]}, {elm.Ftot[2]}\""
+            text = text + f" Ek{elm.id_group}(ev)={elm.Ek} DOF{elm.id_group}={elm.DOF} T{elm.id_group}(K)={elm.T} Ftot{elm.id_group}(pN)=\"{elm.Ftot[0]}, {elm.Ftot[1]}, {elm.Ftot[2]}\""
+            
+            #print(f" Ek{elm.id_group}(ev)={elm.Ek} DOF{elm.id_group}={elm.DOF} T{elm.id_group}(K)={elm.T} Ftot{elm.id_group}(pN)=\"{elm.Ftot[0]}, {elm.Ftot[1]}, {elm.Ftot[2]}\"")
             body = np.append(body, _body)
-
+        text = text.split('\n')
+        print([text[1]])
+        #print(body)
         text = np.append(text, body)
         return text
     
