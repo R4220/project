@@ -1,5 +1,4 @@
 # class_group
-
 import numpy as np
 
 class group:
