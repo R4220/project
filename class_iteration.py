@@ -1,6 +1,7 @@
 # class_iteration.py
 
 import numpy as np
+
 from class_group import group
 
 class iteration:
@@ -11,16 +12,23 @@ class iteration:
         self.ax = [0, 0, 0]
         self.ay = [0, 0, 0]
         self.az = [0, 0, 0]
+        self.L = [0, 0, 0]
         self.t_past = 0
         self.t = 0
         self.U_pot = 0
         self.input = ''
         self.block = np.array([], dtype=str)
-        self.groups = np.array([], dtype=group)
+        self.groups = []#np.array([], dtype=str)
+        self.RDF_atoms = []#np.array([], dtype=str)
         self.switch = False
         self.Ry_to_eV = 13.60570398
         self.bohr_angstrom = 0.529177249
         self.alat_to_angstrom = 0
+        self.count = np.array([], dtype = int)
+        self.R = np.array([], dtype=float)
+        self.dR = 0.
+        self.norm = np.array([], dtype=float)
+        self.e = False
 
     def Alat_to_Angstrom(self):
         self.alat_to_angstrom = self.celldim * self.bohr_angstrom
@@ -52,7 +60,7 @@ class iteration:
         if line != '':
             self.block = np.append(self.block, line)
     
-    def add_group(self, _type, _mass):#, idx):
+    def add_group(self, _type, _mass, RDF):#, idx):
         '''
         This method add to groups the identification of the group
         
@@ -64,7 +72,11 @@ class iteration:
             None
         '''
         
-        self.groups = np.append(self.groups, group(_type, _mass))
+        at = group(_type, _mass)
+        self.groups = np.append(self.groups, at )
+        if _type in RDF:
+            self.RDF_atoms = np.append(self.RDF_atoms, at)
+
     
     def count_group(self, line):
         '''
@@ -128,8 +140,70 @@ class iteration:
 
         text = np.append(text, body)
         return text
+    
+        # estrazione delle coordinate degli atomi
+    '''def coordinates(Block, ind):
+        ''fa cose''
+        positions = [Block[i] for i in ind]
+        for idx, i in enumerate(positions):
+            matches = re.findall(r'(-?\d+(\.\d+)?)', i)
+            positions[idx] = [float(match[0]) for match in matches[:3]]
+        return positions'''
+    
+    
+    # calcolo le varie distanze di un blocco
+    def RDF(self, RDF):
+        dist = []
+        
 
-    def single_frame(self):
+        if self.e == True:  # same species
+            pos = self.RDF_atoms[0].position
+            N = len(pos)
+            for k in range(N - 1):
+                _pos = pos[k+1:] - pos[k]
+                n = np.divide(_pos, self.L)
+                print(n)#####quiii
+                for i in n:
+                    i = round(i)
+                r = np.linalg.norm(_pos - np.multiply(self.L, n))
+                dist.extend(r[r < RDF[0]])
+
+        else:
+            pos_1 = self.RDF_atoms[0].position
+            pos_2 = self.RDF_atoms[1].position
+            for i in pos_1:
+                r = np.linalg.norm(i - pos_2, axis=1)
+                dist.extend(r[r < RDF[0]])
+
+        dist = np.sort(dist)
+        return dist
+
+    def set_RDF(self, RDF):
+        self.count = np.zeros(RDF[3])
+        self.R = np.linspace(0, RDF[0], RDF[3])
+        self.dR = self.R[1]
+        self.norm = np.multiply([((i + self.dR)**3 - i**3) for i in self.R[:RDF[3]]], np.pi * 4 /3)
+        self.e = (RDF[1] == RDF[2])
+
+    def istogram(self, RDF):
+        d = self.RDF(RDF)
+        self.count += np.histogram(d, bins=RDF[3], range=(0, RDF[0]))[0]
+        
+        
+    
+        '''for i in blocks:
+            d = RDF(i, ind, e, r_max)
+            count += np.histogram(d, bins=N, range=(0, r_max))[0]
+
+        print('distances generated')
+    
+        V = 4 * np.pi * R[-1] #Lx, Ly, Lz
+        rho_1 = V/n_at
+        count = np.divide(count, norm) * rho_1
+'''
+
+
+    def single_frame(self, RDF):
         for line in self.block:
             if 'time      =' in line:
                 self.t_past = self.t
@@ -147,6 +221,21 @@ class iteration:
                 else:
                     self.position(line)
 
+        self.istogram(RDF)
+
         text = self.text()
         self.block = []
         return text
+    
+    def normalization(self):
+        V = (self.L[0] * self.L[1] * self.L[2])**2
+        print(self.L)
+        print(self.RDF_atoms[0].N, self.RDF_atoms[1].N)
+        if self.e == True:
+            rho = self.RDF_atoms[0].N **2/(V)
+        else:
+            rho = self.RDF_atoms[0].N * self.RDF_atoms[1].N /(V)
+        
+        self.norm = rho * self.norm
+        self.count = np.divide(self.count, self.norm)
+    

@@ -1,6 +1,6 @@
 # main
 import numpy as np
-
+import matplotlib.pyplot as plt
 from class_iteration import iteration
 
 def setup():
@@ -12,17 +12,27 @@ def setup():
 
     Returns:
         filename: the name of the pwo file that we'll convert into a xyz file
+        Rmax: maximum distance to consider while RDF is calculated
+        at1, at2: atoms between which the RDF is calculated
 
     '''
 
     with open('Setup.txt', 'r') as fset:
         for line in fset:
+            _line = line.split()
             if 'Filename:' in line:
-                filename = line.split()[1]
+                filename = _line[1]
+            if 'Rmax:' in line:
+                Rmax = float(_line[1])
+            if 'Particles:' in line:
+                at1 = _line[1]
+                at2 = _line[2]
+            if 'N:' in line:
+                N = int(_line[1])
 
-    return filename
+    return filename, Rmax, at1, at2, N
 
-def xyz_gen(fout, fin):
+def xyz_gen(fout, fin, RDF, filename):
     '''
     Thin function check the fin file (pwo form) in order to estract all the values and generate the correspective fout file (xyz form)
 
@@ -32,6 +42,7 @@ def xyz_gen(fout, fin):
 
     '''
     iter = iteration()
+    iter.set_RDF(RDF)
     e_storage = False
     e_gen = False
     e_group = False
@@ -51,15 +62,21 @@ def xyz_gen(fout, fin):
             #print(iter.celldim)
         elif 'a(1)' in line:
             x, y, z = map(float, line.split()[3:6])
-            iter.ax = np.multiply([x, y, z], iter.alat_to_angstrom)
+            a = np.multiply([x, y, z], iter.alat_to_angstrom)
+            iter.ax = a
+            iter.L[0] = np.linalg.norm(a)
             #print(iter.ax)
         elif 'a(2)' in line:
             x, y, z = map(float, line.split()[3:6])
-            iter.ay = np.multiply([x, y, z], iter.alat_to_angstrom)
+            a = np.multiply([x, y, z], iter.alat_to_angstrom)
+            iter.ay = a
+            iter.L[1] = np.linalg.norm(a)
             #print(iter.ay)
         elif 'a(3)' in line:
             x, y, z = map(float, line.split()[3:6])
-            iter.az = np.multiply([x, y, z], iter.alat_to_angstrom)
+            a = np.multiply([x, y, z], iter.alat_to_angstrom)
+            iter.az = a
+            iter.L[2] = np.linalg.norm(a)
             #print(iter.az)
 
         '''defining the groups'''
@@ -71,7 +88,7 @@ def xyz_gen(fout, fin):
             if _line == []:
                 e_group = False
             else:
-                iter.add_group(_line[0], _line[2])#, idx)
+                iter.add_group(_line[0], _line[2], RDF)#, idx)
                 #idx += 1
         elif 'site n.' in line:
             e_count = True
@@ -88,7 +105,7 @@ def xyz_gen(fout, fin):
 
         if 'Self-consistent Calculation' in line:
             if e_gen == True:
-                fout.writelines(["%s\n" % i for i in iter.single_frame()])
+                fout.writelines(["%s\n" % i for i in iter.single_frame(RDF)])
             e_gen = True
             e_storage = True
         elif e_storage == True:
@@ -98,10 +115,23 @@ def xyz_gen(fout, fin):
 
         #print(n_at, bravais, lattice_param, V)
         #fout.writelines()
+    
+    iter.normalization()
+    
+    fig = plt.figure(figsize=(8, 6))
+    ax = fig.add_subplot(1, 1, 1)
+    ax.plot(iter.R, iter.count, label='Power spectrum')
+    ax.set_xlabel('r ($A$)')
+    ax.set_ylabel('g(r)')
+    ax.grid()
+    plt.savefig(f'{filename}.png')
+    plt.show()
+    
     return
 
 if __name__ == "__main__":
-    filename = setup()
+    filename, Rmax, at1, at2, N = setup()
+    RDF = [Rmax, at1, at2, N]
     with open(filename + '.xyz', "w+") as fout:
         with open(filename + '.pwo', 'r') as fin:
-            xyz_gen(fout, fin)
+            xyz_gen(fout, fin, RDF, filename)
