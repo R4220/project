@@ -1,4 +1,4 @@
 Filename: TMPI_intermediate
 Rmax: 6
-Particles: Fe2 Fe2
+Particles: C H
 N: 500

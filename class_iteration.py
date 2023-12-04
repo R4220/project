@@ -161,12 +161,18 @@ class iteration:
             N = len(pos)
             for k in range(N - 1):
                 _pos = pos[k+1:] - pos[k]
+                #print(_pos)
+                #print(self.L)
                 n = np.divide(_pos, self.L)
-                print(n)#####quiii
-                for i in n:
-                    i = round(i)
+                #print(n)#####quiii
+                n = np.round(n)
+                #print(n)
+                '''for i in n:
+                    i = round(i)'''
+                #print(np.multiply(self.L, n))
                 r = np.linalg.norm(_pos - np.multiply(self.L, n))
                 dist.extend(r[r < RDF[0]])
+                #break
 
         else:
             pos_1 = self.RDF_atoms[0].position
@@ -180,9 +186,17 @@ class iteration:
 
     def set_RDF(self, RDF):
         self.count = np.zeros(RDF[3])
+
         self.R = np.linspace(0, RDF[0], RDF[3])
+        #print(self.R)
+        #print(self.dR)
         self.dR = self.R[1]
+        '''for i in self.R[:RDF[3]]:
+            print(i)
+            print((i + self.dR)**3 - i**3)
+            self.norm = np.append(self.norm, (i + self.dR)**3 - i**3)'''
         self.norm = np.multiply([((i + self.dR)**3 - i**3) for i in self.R[:RDF[3]]], np.pi * 4 /3)
+        print(self.norm)
         self.e = (RDF[1] == RDF[2])
 
     def istogram(self, RDF):
@@ -229,13 +243,16 @@ class iteration:
     
     def normalization(self):
         V = (self.L[0] * self.L[1] * self.L[2])**2
-        print(self.L)
-        print(self.RDF_atoms[0].N, self.RDF_atoms[1].N)
-        if self.e == True:
-            rho = self.RDF_atoms[0].N **2/(V)
-        else:
-            rho = self.RDF_atoms[0].N * self.RDF_atoms[1].N /(V)
+        print(V)
         
+        #print(self.RDF_atoms[0].N, self.RDF_atoms[1].N)
+        if self.e == True:
+            rho = self.RDF_atoms[0].N **2/ V
+        else:
+            rho = self.RDF_atoms[0].N * self.RDF_atoms[1].N / V
+        #print(rho)
+        #print(self.norm)
         self.norm = rho * self.norm
         self.count = np.divide(self.count, self.norm)
+        '''qui non mi torna qualcosa'''
     
