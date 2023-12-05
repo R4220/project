@@ -5,28 +5,30 @@ from class_iteration import iteration
 
 def setup():
     '''
-    This function extracts the setup information from Setup.txt
-
-    Args:
-        None
+    Extract setup information from Setup.txt.
 
     Returns:
-        filename: the name of the pwo file that we'll convert into a xyz file
-        Rmax: maximum distance to consider while RDF is calculated
-        at1, at2: atoms between which the RDF is calculated
+    - filename (str): Name of the pwo file to convert into an xyz file.
+    - Rmax (float): Maximum distance to consider while calculating RDF.
+    - at1, at2 (str): Atoms between which the RDF is calculated.
+    - N (int): Number of atoms in the simulation.
 
     '''
+    filename = ''
+    Rmax = 0.0
+    at1, at2 = '', ''
+    N = 0
 
     with open('Setup.txt', 'r') as fset:
         for line in fset:
             _line = line.split()
+
             if 'Filename:' in line:
                 filename = _line[1]
             if 'Rmax:' in line:
                 Rmax = float(_line[1])
             if 'Particles:' in line:
-                at1 = _line[1]
-                at2 = _line[2]
+                at1, at2 = _line[1], _line[2]
             if 'N:' in line:
                 N = int(_line[1])
 
@@ -34,93 +36,84 @@ def setup():
 
 def xyz_gen(fout, fin, RDF, filename):
     '''
-    Thin function check the fin file (pwo form) in order to estract all the values and generate the correspective fout file (xyz form)
+    This function checks the fin file (pwo form) to extract all the values and generate the corresponding fout file (xyz form)
 
     Args:
-        fout:   xyz file
-        fin:    pwo file
-
+    - fout: xyz file
+    - fin: pwo file
+    - RDF: list with several information needed to calculate the RDF and define the size of the x-axis of the histogram
+    - filename: the name of the pwo file that we'll convert into a xyz file
     '''
-    iter = iteration()
-    iter.set_RDF(RDF)
-    e_storage = False
-    e_gen = False
-    e_group = False
-    e_count = False
-    #idx = 1
+    iteration_obj = iteration()
+    iteration_obj.set_RDF(RDF)
+    reading_atomic_species = False
+    counting_atoms = False
+    generation_switch = False
+    storage_switch = False
+    
     
     for line in fin:
 
-        '''define the setup information'''
-
+        # define the setup information
+        
         if 'number of atoms/cell' in line:
-            iter.n_at = int(line.split()[4])
-            #print(iter.n_at)
+            iteration_obj.n_at = int(line.split()[4])
         elif 'celldm(1)= ' in line:
-            iter.celldim = float(line.split()[1])
-            iter.Alat_to_Angstrom()
-            #print(iter.celldim)
+            iteration_obj.celldim = float(line.split()[1])
+            iteration_obj.Alat_to_Angstrom()
         elif 'a(1)' in line:
             x, y, z = map(float, line.split()[3:6])
-            a = np.multiply([x, y, z], iter.alat_to_angstrom)
-            iter.ax = a
-            iter.L[0] = np.linalg.norm(a)
-            #print(iter.ax)
+            a = np.multiply([x, y, z], iteration_obj.alat_to_angstrom)
+            iteration_obj.ax = a
+            iteration_obj.L[0] = np.linalg.norm(a)
         elif 'a(2)' in line:
             x, y, z = map(float, line.split()[3:6])
-            a = np.multiply([x, y, z], iter.alat_to_angstrom)
-            iter.ay = a
-            iter.L[1] = np.linalg.norm(a)
-            #print(iter.ay)
+            a = np.multiply([x, y, z], iteration_obj.alat_to_angstrom)
+            iteration_obj.ay = a
+            iteration_obj.L[1] = np.linalg.norm(a)
         elif 'a(3)' in line:
             x, y, z = map(float, line.split()[3:6])
-            a = np.multiply([x, y, z], iter.alat_to_angstrom)
-            iter.az = a
-            iter.L[2] = np.linalg.norm(a)
-            #print(iter.az)
+            a = np.multiply([x, y, z], iteration_obj.alat_to_angstrom)
+            iteration_obj.az = a
+            iteration_obj.L[2] = np.linalg.norm(a)
 
-        '''defining the groups'''
-        if 'atomic species   valence' in line:
-            e_group = True
-        elif e_group == True:
-            #print(line)
+        # defining the groups
+
+        elif 'atomic species   valence' in line:
+            reading_atomic_species = True
+        elif reading_atomic_species == True:
             _line = line.split()
             if _line == []:
-                e_group = False
+                reading_atomic_species = False
             else:
-                iter.add_group(_line[0], _line[2], RDF)#, idx)
-                #idx += 1
+                iteration_obj.add_group(_line[0], _line[2], RDF)
+
+        # defining the index of atoms and the initial positions
+
         elif 'site n.' in line:
-            e_count = True
-        elif e_count == True:
+            counting_atoms = True
+        elif counting_atoms:
             _line = line.split()
             if _line == []:
-                e_count = False
+                counting_atoms = False
             else:
-                #print(_line)
-                iter.count_group(_line)#, idx)
-            
+                iteration_obj.count_group(_line)
 
-        '''defining the configuration at each time'''
+        # defining the configuration at each time
 
-        if 'Self-consistent Calculation' in line:
-            if e_gen == True:
-                fout.writelines(["%s\n" % i for i in iter.single_frame(RDF)])
-            e_gen = True
-            e_storage = True
-        elif e_storage == True:
-            iter.store(line)
-
-        #Self constant calculation
-
-        #print(n_at, bravais, lattice_param, V)
-        #fout.writelines()
+        elif 'Self-consistent Calculation' in line:
+            if generation_switch == True:
+                fout.writelines(["%s\n" % i for i in iteration_obj.single_frame(RDF)])
+            generation_switch = True
+            storage_switch = True
+        elif storage_switch == True:
+            iteration_obj.store(line)
     
-    iter.normalization()
+    iteration_obj.normalization()
     
     fig = plt.figure(figsize=(8, 6))
     ax = fig.add_subplot(1, 1, 1)
-    ax.plot(iter.R, iter.count, label='Power spectrum')
+    ax.plot(iteration_obj.R, iteration_obj.count, label='Power spectrum')
     ax.set_xlabel('r ($A$)')
     ax.set_ylabel('g(r)')
     ax.grid()
