@@ -29,13 +29,16 @@ class iteration:
     '''
 
     def __init__(self):
-        self.n_atoms = 0
-        self.cell_dim = 0
-        self.ax = np.zeros(3)
-        self.ay = np.zeros(3)
-        self.az = np.zeros(3)
+        self.n_atoms = 0 #
+        self.n_type = 0 #
+        self.cell_dim = 0 #
+        self.ax = np.zeros(3) #
+        self.ay = np.zeros(3) #
+        self.az = np.zeros(3) #
         self.L = np.zeros(3)
         self.alat_to_angstrom = 0.0
+        self.dt = 0. #
+        self.N_iteration = 0 #
         self.t_past = 0
         self.t = 0
         self.U_pot = 0
@@ -134,7 +137,7 @@ class iteration:
         Return: 
         - text: the list of the lines
         '''
-        text = f'{self.n_at}\nLattice(Ang)=\"{self.ax[0]}, {self.ax[1]}, {self.ax[2]}, {self.ay[0]}, {self.ay[1]}, {self.ay[2]}, {self.az[0]}, {self.az[1]}, {self.az[2]}\" t(ps)={self.t} Epot(eV)={self.U_pot / 13.60570398 }'
+        text = f'{self.n_atoms}\nLattice(Ang)=\"{self.ax[0]}, {self.ax[1]}, {self.ax[2]}, {self.ay[0]}, {self.ay[1]}, {self.ay[2]}, {self.az[0]}, {self.az[1]}, {self.az[2]}\" t(ps)={self.t} Epot(eV)={self.U_pot / 13.60570398 }'
         body = []
     
         for elm in self.groups:
@@ -202,7 +205,6 @@ class iteration:
         - RDF: List containing several pieces of information needed to calculate the RDF and define the size of the x-axis of the histogram.
         '''
         self.count += np.histogram(self.RDF(RDF), bins=RDF[3], range=(0, RDF[0]))[0]
-
 
     def single_frame(self, RDF):
         '''
