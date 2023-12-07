@@ -66,26 +66,23 @@ def preamble(fin, iteration_obj, preamble_switch):
         x, y, z = map(float, line.split()[3:6])
         a = np.multiply([x, y, z], iteration_obj.alat_to_angstrom)
         iteration_obj.ax = a
-        iteration_obj.L[0] = np.linalg.norm(a)
         preamble_switch[3] = False
     elif 'a(2)' in line:
         x, y, z = map(float, line.split()[3:6])
         a = np.multiply([x, y, z], iteration_obj.alat_to_angstrom)
         iteration_obj.ay = a
-        iteration_obj.L[1] = np.linalg.norm(a)
         preamble_switch[4] = False
     elif 'a(3)' in line:
         x, y, z = map(float, line.split()[3:6])
         a = np.multiply([x, y, z], iteration_obj.alat_to_angstrom)
         iteration_obj.az = a
-        iteration_obj.L[2] = np.linalg.norm(a)
         preamble_switch[5] = False
     
     # defining the groups
     elif 'atomic species   valence' in line:
         for _ in range(iteration_obj.n_type):
             line = fin.readline().split()
-            iteration_obj.set_mass(line[0], line[2])#, RDF)
+            iteration_obj.set_mass(line[0], line[2])
         preamble_switch[6] = False
 
     # defining the index of atoms and the initial positions
@@ -101,37 +98,18 @@ def extract_forces(line, iteration_obj):
     while not 'negative rho' in line:
         line = fin.readline()
     for _ in range(iteration_obj.n_atoms):
-        #line = fin.readline() IN QUESTE LINEE CI SONO LE FORZE
-        print(line)
+        line = fin.readline().split()
+        iteration_obj.forces(line)
 
 def extract_positions(line, iteration_obj):
     for _ in range(iteration_obj.n_atoms):
-        #line = fin.readline() # IN QUESTE LINEE CI SONO LE POSIZIONI
-        print(line)
+        line = fin.readline().split()
+        iteration_obj.positions(line)
 
-def xyz_gen(fout, fin, RDF, groups ):
-    '''
-    This function checks the fin file (pwo form) to extract all the values and generate the corresponding fout file (xyz form)
-
-    Args:
-    - fout: xyz file
-    - fin: pwo file
-    - RDF: list with several information needed to calculate the RDF and define the size of the x-axis of the histogram
-    - filename: the name of the pwo file that we'll convert into a xyz file
-    '''
-    iteration_obj = iteration(groups)
-    iteration_obj.set_RDF(RDF)
-
-    preamble_switch = [True] * 8
+def body(iteration_obj):
     generation_switch = [True] * 5
 
-    # define the setup information
-    while any(preamble_switch):
-        preamble_switch = preamble(fin, iteration_obj, preamble_switch)
-    
-    # defining the configuration at each time
     for line in fin:
-
         # extracting the potential energy
         if '!    total energy' in line:
             iteration_obj.U_pot = float(line.split()[4])
@@ -150,7 +128,6 @@ def xyz_gen(fout, fin, RDF, groups ):
         # extracting the iteration number
         elif 'Entering' in line:
              iteration_obj.N_iteration = float(line.split()[4])
-             print(line)
              generation_switch[3] = False
              
         # extracting the atomic position
@@ -158,14 +135,35 @@ def xyz_gen(fout, fin, RDF, groups ):
             extract_positions(line, iteration_obj)
             generation_switch[4] = False
             
-        if any(generation_switch) == True:
+        if all(generation_switch) == False:
+            print('yes')
             fout.writelines(["%s\n" % i for i in iteration_obj.single_frame(RDF)])
             generation_switch = [True] * 5
+
+def xyz_gen(fout, fin, RDF, groups ):
+    '''
+    This function checks the fin file (pwo form) to extract all the values and generate the corresponding fout file (xyz form)
+
+    Args:
+    - fout: xyz file
+    - fin: pwo file
+    - RDF: list with several information needed to calculate the RDF and define the size of the x-axis of the histogram
+    - filename: the name of the pwo file that we'll convert into a xyz file
+    '''
+    iteration_obj = iteration(groups)
+    preamble_switch = [True] * 8
+
+    # define the setup information
+    while any(preamble_switch):
+        preamble_switch = preamble(fin, iteration_obj, preamble_switch)
+    
+    # defining the configuration at each time
+    body(iteration_obj)
 
             
         
     #iteration_obj.normalization()
-    fout.writelines(["%s\n" % i for i in iteration_obj.single_frame(RDF)])
+    #fout.writelines(["%s\n" % i for i in iteration_obj.single_frame(RDF)])
     '''fig = plt.figure(figsize=(8, 6))
     ax = fig.add_subplot(1, 1, 1)
     ax.plot(iteration_obj.R, iteration_obj.count, label='Power spectrum')
