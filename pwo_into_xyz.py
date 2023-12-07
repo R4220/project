@@ -2,6 +2,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from class_iteration import iteration
+from class_group import group
 
 def setup():
     '''
@@ -15,11 +16,15 @@ def setup():
 
     '''
     filename = ''
+
     Rmax = 0.0
     at1, at2 = '', ''
     N = 0
+    groups = []
 
     with open('Setup.txt', 'r') as fset:
+        id = 0
+        move = True
         for line in fset:
             _line = line.split()
 
@@ -31,8 +36,16 @@ def setup():
                 at1, at2 = _line[1], _line[2]
             if 'N:' in line:
                 N = int(_line[1])
+            if 'Group' in line:
+                id = _line[1]
+                if 'ext' in line:
+                    move = False
+                else:
+                    move = True
+                _line = fset.readline().split()
+                groups = np.append(groups, group(_line, id, move))
 
-    return filename, Rmax, at1, at2, N
+    return filename, Rmax, at1, at2, N, groups
 
 def preamble(fin, iteration_obj, preamble_switch):
     '''
@@ -47,8 +60,7 @@ def preamble(fin, iteration_obj, preamble_switch):
         iteration_obj.n_type = int(line.split()[5])
         preamble_switch[1] = False
     elif 'celldm(1)= ' in line:
-        iteration_obj.celldim = float(line.split()[1])
-        iteration_obj.Alat_to_Angstrom()
+        iteration_obj.Alat_to_Angstrom(float(line.split()[1]))
         preamble_switch[2] = False
     elif 'a(1)' in line:
         x, y, z = map(float, line.split()[3:6])
@@ -73,7 +85,7 @@ def preamble(fin, iteration_obj, preamble_switch):
     elif 'atomic species   valence' in line:
         for _ in range(iteration_obj.n_type):
             line = fin.readline().split()
-            iteration_obj.add_group(line[0], line[2], RDF)
+            iteration_obj.set_mass(line[0], line[2])#, RDF)
         preamble_switch[6] = False
 
     # defining the index of atoms and the initial positions
@@ -85,7 +97,19 @@ def preamble(fin, iteration_obj, preamble_switch):
 
     return preamble_switch
 
-def xyz_gen(fout, fin, RDF, filename):
+def extract_forces(line, iteration_obj):
+    while not 'negative rho' in line:
+        line = fin.readline()
+    for _ in range(iteration_obj.n_atoms):
+        #line = fin.readline() IN QUESTE LINEE CI SONO LE FORZE
+        print(line)
+
+def extract_positions(line, iteration_obj):
+    for _ in range(iteration_obj.n_atoms):
+        #line = fin.readline() # IN QUESTE LINEE CI SONO LE POSIZIONI
+        print(line)
+
+def xyz_gen(fout, fin, RDF, groups ):
     '''
     This function checks the fin file (pwo form) to extract all the values and generate the corresponding fout file (xyz form)
 
@@ -95,14 +119,11 @@ def xyz_gen(fout, fin, RDF, filename):
     - RDF: list with several information needed to calculate the RDF and define the size of the x-axis of the histogram
     - filename: the name of the pwo file that we'll convert into a xyz file
     '''
-    iteration_obj = iteration()
+    iteration_obj = iteration(groups)
     iteration_obj.set_RDF(RDF)
-    preamble_switch = [True] * 8
 
-    reading_atomic_species = False
-    counting_atoms = False
-    generation_switch = False
-    storage_switch = False
+    preamble_switch = [True] * 8
+    generation_switch = [True] * 5
 
     # define the setup information
     while any(preamble_switch):
@@ -114,54 +135,51 @@ def xyz_gen(fout, fin, RDF, filename):
         # extracting the potential energy
         if '!    total energy' in line:
             iteration_obj.U_pot = float(line.split()[4])
+            generation_switch[0] = False
 
         # extracting the forces on atoms
         elif 'Forces a' in line:
-            while not 'negative rho' in line:
-                line = fin.readline()
-            for _ in range(iteration_obj.n_atoms):
-                #line = fin.readline() IN QUESTE LINEE CI SONO LE FORZE
-                print(line)
+            extract_forces(line, iteration_obj)
+            generation_switch[1] = False
 
         # extracting the time step
         elif 'Time step' in line:
             iteration_obj.dt = float(line.split()[3]) # a.u
+            generation_switch[2] = False
 
         # extracting the iteration number
         elif 'Entering' in line:
              iteration_obj.N_iteration = float(line.split()[4])
              print(line)
+             generation_switch[3] = False
              
         # extracting the atomic position
         elif 'ATOMIC_POSITIONS' in line:
-            for _ in range(iteration_obj.n_atoms):
-                #line = fin.readline() # IN QUESTE LINEE CI SONO LE POSIZIONI
-                print(line)
+            extract_positions(line, iteration_obj)
+            generation_switch[4] = False
             
+        if any(generation_switch) == True:
+            fout.writelines(["%s\n" % i for i in iteration_obj.single_frame(RDF)])
+            generation_switch = [True] * 5
 
-            if generation_switch == True:
-                fout.writelines(["%s\n" % i for i in iteration_obj.single_frame(RDF)])
-            generation_switch = True
-            storage_switch = True
-        elif storage_switch == True:
-            iteration_obj.store(line)
+            
         
-    iteration_obj.normalization()
+    #iteration_obj.normalization()
     fout.writelines(["%s\n" % i for i in iteration_obj.single_frame(RDF)])
-    fig = plt.figure(figsize=(8, 6))
+    '''fig = plt.figure(figsize=(8, 6))
     ax = fig.add_subplot(1, 1, 1)
     ax.plot(iteration_obj.R, iteration_obj.count, label='Power spectrum')
     ax.set_xlabel('r ($A$)')
     ax.set_ylabel('g(r)')
     ax.grid()
     plt.savefig(f'{filename}.png')
-    plt.show()
+    plt.show()'''
     
     return
 
 if __name__ == "__main__":
-    filename, Rmax, at1, at2, N = setup()
+    filename, Rmax, at1, at2, N, groups = setup()
     RDF = [Rmax, at1, at2, N]
     with open(filename + '.xyz', "w+") as fout:
         with open(filename + '.pwo', 'r') as fin:
-            xyz_gen(fout, fin, RDF, filename)
+            xyz_gen(fout, fin, RDF, groups)

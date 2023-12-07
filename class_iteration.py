@@ -28,22 +28,23 @@ class iteration:
     - e: boolean value representing if the atoms for which the RDF is calculated are the same (True) or not (False)
     '''
 
-    def __init__(self):
+    def __init__(self, groups):
         self.n_atoms = 0 #
         self.n_type = 0 #
-        self.cell_dim = 0 #
+        self.alat_to_angstrom = 0.0 #
         self.ax = np.zeros(3) #
         self.ay = np.zeros(3) #
         self.az = np.zeros(3) #
+        self.groups = groups
+
         self.L = np.zeros(3)
-        self.alat_to_angstrom = 0.0
         self.dt = 0. #
         self.N_iteration = 0 #
         self.t_past = 0
         self.t = 0
         self.U_pot = 0
         self.block = []
-        self.groups = []
+        
         self.RDF_atoms = []
         self.switch_at = False 
         self.count = np.zeros(0, dtype=int)
@@ -52,12 +53,29 @@ class iteration:
         self.norm = np.zeros(0, dtype=float)
         self.e = False
     
-    def Alat_to_Angstrom(self):
+    def Alat_to_Angstrom(self, celldim):
         '''
         This method defines the conversion parameter between the Alat unit of length (that depends on celldim) and angstrom.
         '''
-        self.alat_to_angstrom = self.celldim * 0.529177249
+        self.alat_to_angstrom = celldim * 0.529177249
 
+    def set_mass(self, _type, _mass):#, RDF)
+        '''
+        This method adds the identification of the group to groups.
+
+        Parameters:
+        - _type: name of the atom
+        - _mass: mass of the atom
+        - RDF: list of atom types for RDF calculation
+        '''
+        for gr in self.groups:
+            if _type in gr.type:
+               gr.add_atom(_type, _mass) 
+    
+        # Check if the atom type is in the RDF list
+        #if _type in RDF:
+         #   self.RDF_atoms = np.append(self.RDF_atoms, at)
+   
     def store(self, line):
         '''
         This method adds the line to block if it is not empty.
@@ -67,23 +85,7 @@ class iteration:
         '''
         if line != '':
             self.block = np.append(self.block, line)
-    
-    def add_group(self, _type, _mass, RDF):
-        '''
-        This method adds the identification of the group to groups.
-
-        Parameters:
-        - _type: name of the atom
-        - _mass: mass of the atom
-        - RDF: list of atom types for RDF calculation
-        '''
-        at = group(_type, _mass)
-        self.groups = np.append(self.groups, at)
-    
-        # Check if the atom type is in the RDF list
-        if _type in RDF:
-            self.RDF_atoms = np.append(self.RDF_atoms, at)
-    
+     
     def count_group(self, line):
         '''
         This method counts the number of atoms for each group.
@@ -94,10 +96,13 @@ class iteration:
         atom_type = line[1] 
 
         for elm in self.groups:
-            if elm.type == atom_type:
-                elm.N += 1
-                elm.add_id(int(line[0]))
-                elm.add_position_past(float(line[6]) * self.alat_to_angstrom, float(line[7]) * self.alat_to_angstrom, float(line[8]) * self.alat_to_angstrom)
+            if atom_type in elm.type:
+                for at in elm.atoms:
+                    if atom_type == at.name:
+                        at.N += 1
+                        at.add_id(int(line[0]))
+                        at.add_position_past(float(line[6]) * self.alat_to_angstrom, float(line[7]) * self.alat_to_angstrom, float(line[8]) * self.alat_to_angstrom)
+                        break
                 break
 
     def forces(self, line):
@@ -107,12 +112,10 @@ class iteration:
         Parameters:
         - line: the line in which there are the coordinates of the force
         '''
-        _line = line.split()
-        atom_id = int(_line[1]) 
     
         for elm in self.groups:
-            if atom_id in elm.id:
-                elm.add_force(float(_line[6]), float(_line[7]), float(_line[8]))
+            if int(line[1])  in elm.id:
+                elm.add_force(float(line[6]), float(line[7]), float(line[8]))
                 break
  
     def position(self, line):
@@ -236,7 +239,7 @@ class iteration:
                     self.switch_at = False
                 else:
                     self.position(line)
-        self.istogram(RDF)
+        #self.istogram(RDF)
         text = self.text()
         self.block = []
         return text

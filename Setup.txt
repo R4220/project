@@ -1,4 +1,18 @@
 Filename: TMPI_intermediate
+
+Group 0 
+H P C O
+Group 2 ext
+Fe2
+Group 3 
+Fe3
+Group 4 
+Fe4
+Group 5 ext
+Fe5
+
+# RDF
+
 Rmax: 10
 Particles: C H
 N: 500
