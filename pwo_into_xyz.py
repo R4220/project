@@ -91,6 +91,7 @@ def preamble(fin, iteration_obj, preamble_switch):
             line = fin.readline()
             iteration_obj.count_group(line.split())
         preamble_switch[7] = False
+        iteration_obj.set_DOF()
 
     return preamble_switch
 
@@ -102,21 +103,26 @@ def extract_forces(line, iteration_obj):
         iteration_obj.forces(line)
 
 def extract_positions(line, iteration_obj):
+    for elm in iteration_obj.groups:
+            print(elm.type)
     for _ in range(iteration_obj.n_atoms):
         line = fin.readline().split()
         iteration_obj.positions(line)
+    for elm in iteration_obj.groups:
+            for at in elm.atoms:
+                print(at.name, at.position)
 
 def body(iteration_obj):
     generation_switch = [True] * 5
-
     for line in fin:
+        
         # extracting the potential energy
         if '!    total energy' in line:
             iteration_obj.U_pot = float(line.split()[4])
             generation_switch[0] = False
 
         # extracting the forces on atoms
-        elif 'Forces a' in line:
+        if 'Forces a' in line:
             extract_forces(line, iteration_obj)
             generation_switch[1] = False
 
@@ -135,8 +141,7 @@ def body(iteration_obj):
             extract_positions(line, iteration_obj)
             generation_switch[4] = False
             
-        if all(generation_switch) == False:
-            print('yes')
+        if not any(generation_switch):
             fout.writelines(["%s\n" % i for i in iteration_obj.single_frame(RDF)])
             generation_switch = [True] * 5
 

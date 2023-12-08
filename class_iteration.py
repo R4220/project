@@ -61,7 +61,7 @@ class iteration:
             #print(_type)
             if _type in gr.type:
                #print('ok')
-               gr.add_atom(_type, _mass) 
+               gr.Add_atom(_type, _mass) 
 
     def count_group(self, line):
         '''
@@ -76,11 +76,18 @@ class iteration:
                 elm.id_tot = np.append(elm.id_tot, int(line[0]))
                 for at in elm.atoms:
                     if atom_type == at.name:
+                        #print(line)
                         at.N += 1
                         at.id = np.append(at.id, int(line[0]))
                         at.add_position_past(float(line[6]) * self.alat_to_angstrom, float(line[7]) * self.alat_to_angstrom, float(line[8]) * self.alat_to_angstrom)
                         break
                 break
+    
+    def set_DOF(self):
+        for elm in self.groups:
+            elm.DOF = 3 * len(elm.id_tot)
+            if not elm.id_group == 0 :
+                elm.DOF = elm.DOF - 3
 
     def forces(self, line):
         '''
@@ -89,37 +96,47 @@ class iteration:
         Parameters:
         - line: the line in which there are the coordinates of the force
         '''
+        atom_type = int(line[1])
         for elm in self.groups:
-            if int(line[1])  in elm.id_tot:
-                elm.add_force(float(line[6]), float(line[7]), float(line[8]))
-                break
+            if atom_type  in elm.id_tot:
+                for at in elm.atoms:
+                    if atom_type in at.id:
+                        at.add_force(float(line[6]), float(line[7]), float(line[8]))
+                        elm.Add_force(float(line[6]), float(line[7]), float(line[8]))
+                        break
+            break
 
     def positions(self, line):
+        #print(line)
         atom_type = line[0] 
+        
         for elm in self.groups:
+            print(elm.type)
             if atom_type in elm.type:
+                #print(elm.type)
                 for at in elm.atoms:
+                    #print(at.name)
                     if atom_type == at.name:
                         at.add_position(float(line[1]), float(line[2]), float(line[3]))
                         break
                 break
+        
     
-    def single_frame(self, a):
+    def single_frame(self, RDF):
         '''
         This method generates a list in which each element is a line in the output file, representing the current time step.
 
         Return: 
         - text: the list of the lines
-        '''
-        text = f'{self.n_atoms}\nLattice(Ang)=\"{self.ax[0]}, {self.ax[1]}, {self.ax[2]}, {self.ay[0]}, {self.ay[1]}, {self.ay[2]}, {self.az[0]}, {self.az[1]}, {self.az[2]}\" dt(ps)={self.dt} N={self.N_iteration} Epot(eV)={self.U_pot / 13.60570398 }'
-        body = []
-    
-        #for elm in self.groups:
-            #_body = elm.generate(self.t - self.t_past)
-            #elm.DOF = elm.N
-            #text = text + f" Ek{elm.id_group}(ev)={elm.Ek} DOF{elm.id_group}={elm.DOF} T{elm.id_group}(K)={elm.T} Ftot{elm.id_group}(pN)=\"{elm.Ftot[0]}, {elm.Ftot[1]}, {elm.Ftot[2]}\""
-            #body.extend(_body)
+        '''        
+        text = [f'{self.n_atoms}', 'Lattice(Ang)=\"{self.ax[0]}, {self.ax[1]}, {self.ax[2]}, {self.ay[0]}, {self.ay[1]}, {self.ay[2]}, {self.az[0]}, {self.az[1]}, {self.az[2]}\" dt(ps)={self.dt} N={self.N_iteration} Epot(eV)={self.U_pot / 13.60570398 }']
 
-        text = text.split('\n')
-        text.extend(body)
+        for elm in self.groups:
+            '''for at in elm.atoms:
+                print(at.name, at.position_past)'''
+            
+            body = elm.Generate(self.dt)
+            text[1] = text[1] + f" Ek{elm.id_group}(ev)={elm.Ek} DOF{elm.id_group}={elm.DOF} T{elm.id_group}(K)={elm.T} Ftot{elm.id_group}(pN)=\"{elm.Ftot[0]}, {elm.Ftot[1]}, {elm.Ftot[2]}\""
+            text.extend(body)
+
         return text
