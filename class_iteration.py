@@ -33,7 +33,7 @@ class iteration:
 
         self.n_atoms = 0 #
         self.n_type = 0 #
-        self.alat_to_angstrom = 0.0 #
+
         self.ax = np.zeros(3) #
         self.ay = np.zeros(3) #
         self.az = np.zeros(3) #
@@ -41,6 +41,9 @@ class iteration:
         self.U_pot = 0
         self.dt = 0. 
         self.N_iteration = 0
+
+        self.alat_to_angstrom = 0.0 #
+        self.Ryau_to_pN =  4.17782489644e4
   
     def Alat_to_Angstrom(self, celldim):
         '''
@@ -99,8 +102,8 @@ class iteration:
             if atom_type in gr.id_tot:
                 for at in gr.atoms:
                     if atom_type in at.id:
-                        at.add_force(float(line[6]), float(line[7]), float(line[8]))
-                        gr.Add_force(float(line[6]), float(line[7]), float(line[8]))
+                        at.add_force(float(line[6]) * self.Ryau_to_pN, float(line[7]) * self.Ryau_to_pN, float(line[8]) * self.Ryau_to_pN)
+                        gr.Add_force(float(line[6]) * self.Ryau_to_pN, float(line[7]) * self.Ryau_to_pN, float(line[8]) * self.Ryau_to_pN)
                         break
                 break
 
@@ -115,7 +118,6 @@ class iteration:
                         break
                 break
         
-    
     def single_frame(self, RDF):
         '''
         This method generates a list in which each element is a line in the output file, representing the current time step.
@@ -130,7 +132,7 @@ class iteration:
                 print(at.name, at.position_past)'''
             
             body = gr.Generate(self.dt)
-            text[1] = text[1] + f' Ek{gr.id_group}(ev)={gr.Ek:.3f} DOF{gr.id_group}={gr.DOF} T{gr.id_group}(K)={gr.T:.3f} Ftot{gr.id_group}(pN)=\"{gr.Ftot[0]}, {gr.Ftot[1]}, {gr.Ftot[2]}\"'
+            text[1] = text[1] + f' Ek{gr.id_group}(ev)={gr.Ek:.3f} DOF{gr.id_group}={gr.DOF} T{gr.id_group}(K)={gr.T:.3f} Ftot{gr.id_group}(pN)=\"{gr.Ftot[0]:.3f}, {gr.Ftot[1]:.3f}, {gr.Ftot[2]:.3f}\"'
             text.extend(body)
 
         return text

@@ -66,4 +66,5 @@ class atom:
         Parameters:
         - Dt (float): Time interval.
         """
+        print(np.array(self.position, dtype=float) - np.array(self.position_past, dtype=float), dt)
         self.velocity = (np.array(self.position, dtype=float) - np.array(self.position_past, dtype=float)) / dt

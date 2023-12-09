@@ -39,8 +39,12 @@ class group:
         self.id_tot = np.array([], dtype=int)
         self.DOF = 0.
         self.Ek = 0.
+
         self.Ftot = np.array([], dtype=float).reshape(0, 3)
         self.force = np.array([], dtype=float).reshape(0, 3)
+
+        self.Vtot = np.array([], dtype=float).reshape(0, 3)
+        self.velocity = np.array([], dtype=float).reshape(0, 3)
 
     def Add_atom(self, name, mass):
         self.atoms = np.append(self.atoms, atom(name, mass, self.move, self.id_group))
@@ -60,7 +64,14 @@ class group:
         # Generate the velocity array for each atom type
         for at in self.atoms:
             at.generarte_velocity(dt)
-            self.Ek += 0.5 * float(at.mass) * np.sum(np.linalg.norm(at.velocity, axis=1)**2) * 0.0001036426948415943
+            self.velocity = np.append(self.velocity, at.velocity)
+        
+        self.Vtot = np.sum(self.velocity, axis=0)
+        print(self.Vtot)
+        for at in self.atoms:
+            self.Ek += 0.5 * float(at.mass) * np.sum(np.linalg.norm(at.velocity - self.Vtot, axis=1)**2) * 0.0001036426948415943
+        
+        
 
     def Generate(self, dt):
         # Calculate the kinetic energy
