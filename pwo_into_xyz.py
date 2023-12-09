@@ -98,22 +98,18 @@ def preamble(fin, iteration_obj, preamble_switch):
 def extract_forces(line, iteration_obj):
     while not 'negative rho' in line:
         line = fin.readline()
+    
     for _ in range(iteration_obj.n_atoms):
         line = fin.readline().split()
         iteration_obj.forces(line)
 
 def extract_positions(line, iteration_obj):
-    for elm in iteration_obj.groups:
-            print(elm.type)
     for _ in range(iteration_obj.n_atoms):
         line = fin.readline().split()
         iteration_obj.positions(line)
-    for elm in iteration_obj.groups:
-            for at in elm.atoms:
-                print(at.name, at.position)
 
 def body(iteration_obj):
-    generation_switch = [True] * 5
+    generation_switch = [True] * 4
     for line in fin:
         
         # extracting the potential energy
@@ -128,22 +124,21 @@ def body(iteration_obj):
 
         # extracting the time step
         elif 'Time step' in line:
-            iteration_obj.dt = float(line.split()[3]) # a.u
-            generation_switch[2] = False
+            iteration_obj.dt = float(line.split()[3])  * 4.8378e-5 #s
 
         # extracting the iteration number
         elif 'Entering' in line:
-             iteration_obj.N_iteration = float(line.split()[4])
-             generation_switch[3] = False
+             iteration_obj.N_iteration = int(line.split()[4])
+             generation_switch[2] = False
              
         # extracting the atomic position
         elif 'ATOMIC_POSITIONS' in line:
             extract_positions(line, iteration_obj)
-            generation_switch[4] = False
+            generation_switch[3] = False
             
         if not any(generation_switch):
             fout.writelines(["%s\n" % i for i in iteration_obj.single_frame(RDF)])
-            generation_switch = [True] * 5
+            generation_switch = [True] * 4
 
 def xyz_gen(fout, fin, RDF, groups ):
     '''
@@ -168,7 +163,6 @@ def xyz_gen(fout, fin, RDF, groups ):
             
         
     #iteration_obj.normalization()
-    #fout.writelines(["%s\n" % i for i in iteration_obj.single_frame(RDF)])
     '''fig = plt.figure(figsize=(8, 6))
     ax = fig.add_subplot(1, 1, 1)
     ax.plot(iteration_obj.R, iteration_obj.count, label='Power spectrum')

@@ -57,10 +57,7 @@ class iteration:
         - _mass: mass of the atom
         '''
         for gr in self.groups:
-            #print(gr.type)
-            #print(_type)
             if _type in gr.type:
-               #print('ok')
                gr.Add_atom(_type, _mass) 
 
     def count_group(self, line):
@@ -71,12 +68,11 @@ class iteration:
         - line: the read line of the file
         '''
         atom_type = line[1] 
-        for elm in self.groups:
-            if atom_type in elm.type:
-                elm.id_tot = np.append(elm.id_tot, int(line[0]))
-                for at in elm.atoms:
+        for gr in self.groups:
+            if atom_type in gr.type:
+                gr.id_tot = np.append(gr.id_tot, int(line[0]))
+                for at in gr.atoms:
                     if atom_type == at.name:
-                        #print(line)
                         at.N += 1
                         at.id = np.append(at.id, int(line[0]))
                         at.add_position_past(float(line[6]) * self.alat_to_angstrom, float(line[7]) * self.alat_to_angstrom, float(line[8]) * self.alat_to_angstrom)
@@ -84,10 +80,10 @@ class iteration:
                 break
     
     def set_DOF(self):
-        for elm in self.groups:
-            elm.DOF = 3 * len(elm.id_tot)
-            if not elm.id_group == 0 :
-                elm.DOF = elm.DOF - 3
+        for gr in self.groups:
+            gr.DOF = 3 * len(gr.id_tot)
+            if not gr.id_group == 0 :
+                gr.DOF = gr.DOF - 3
 
     def forces(self, line):
         '''
@@ -96,26 +92,24 @@ class iteration:
         Parameters:
         - line: the line in which there are the coordinates of the force
         '''
+        
         atom_type = int(line[1])
-        for elm in self.groups:
-            if atom_type  in elm.id_tot:
-                for at in elm.atoms:
+                
+        for gr in self.groups:
+            if atom_type in gr.id_tot:
+                for at in gr.atoms:
                     if atom_type in at.id:
                         at.add_force(float(line[6]), float(line[7]), float(line[8]))
-                        elm.Add_force(float(line[6]), float(line[7]), float(line[8]))
+                        gr.Add_force(float(line[6]), float(line[7]), float(line[8]))
                         break
-            break
+                break
 
     def positions(self, line):
-        #print(line)
         atom_type = line[0] 
         
-        for elm in self.groups:
-            print(elm.type)
-            if atom_type in elm.type:
-                #print(elm.type)
-                for at in elm.atoms:
-                    #print(at.name)
+        for gr in self.groups:
+            if atom_type in gr.type:
+                for at in gr.atoms:
                     if atom_type == at.name:
                         at.add_position(float(line[1]), float(line[2]), float(line[3]))
                         break
@@ -129,14 +123,16 @@ class iteration:
         Return: 
         - text: the list of the lines
         '''        
-        text = [f'{self.n_atoms}', 'Lattice(Ang)=\"{self.ax[0]}, {self.ax[1]}, {self.ax[2]}, {self.ay[0]}, {self.ay[1]}, {self.ay[2]}, {self.az[0]}, {self.az[1]}, {self.az[2]}\" dt(ps)={self.dt} N={self.N_iteration} Epot(eV)={self.U_pot / 13.60570398 }']
+        text = [f'{self.n_atoms}', f'Lattice(Ang)=\"{self.ax[0]:.3f}, {self.ax[1]:.3f}, {self.ax[2]:.3f}, {self.ay[0]:.3f}, {self.ay[1]:.3f}, {self.ay[2]:.3f}, {self.az[0]:.3f}, {self.az[1]:.3f}, {self.az[2]:.3f}\" dt(ps)={self.dt:.6f} N={self.N_iteration} Epot(eV)={(self.U_pot / 13.60570398):.3f}']
 
-        for elm in self.groups:
-            '''for at in elm.atoms:
+        for gr in self.groups:
+            '''for at in gr.atoms:
                 print(at.name, at.position_past)'''
             
-            body = elm.Generate(self.dt)
-            text[1] = text[1] + f" Ek{elm.id_group}(ev)={elm.Ek} DOF{elm.id_group}={elm.DOF} T{elm.id_group}(K)={elm.T} Ftot{elm.id_group}(pN)=\"{elm.Ftot[0]}, {elm.Ftot[1]}, {elm.Ftot[2]}\""
+            body = gr.Generate(self.dt)
+            text[1] = text[1] + f' Ek{gr.id_group}(ev)={gr.Ek:.3f} DOF{gr.id_group}={gr.DOF} T{gr.id_group}(K)={gr.T:.3f} Ftot{gr.id_group}(pN)=\"{gr.Ftot[0]}, {gr.Ftot[1]}, {gr.Ftot[2]}\"'
             text.extend(body)
 
         return text
+
+'''quando fai rdf e devi calcolare la matrice, dopo formatta i vettori "{:.4f}".format(n)'''
