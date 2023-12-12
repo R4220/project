@@ -3,7 +3,7 @@ import numpy as np
 
 from class_iteration import iteration
 from class_group import group
-from class_RDF import RDF
+from class_RDF import graph
 
 
 def setup():
@@ -221,7 +221,7 @@ def extract_positions(line, iteration_obj, istogram):
         iteration_obj.positions(line, istogram)
 
 
-def body(fout, iteration_obj, istogram):
+def body(fout, iteration_obj, graphs):
     """
     Extract relevant information from the input file and write output to the output file.
 
@@ -231,14 +231,14 @@ def body(fout, iteration_obj, istogram):
         The output file object.
     iteration_obj : iteration
         The iteration object containing system information.
-    istogram : RDF
-        The list neaded for set up the RDF histogram object for radial distribution function calculation.
+    graphs : graph
+        The graph object in which the plotting of the graphs happens.
 
     Notes
     -----
     This function reads the input file line by line, extracting relevant information such as potential energy, forces on atoms, time step, iteration number, and atomic positions.
     It updates the information in the iteration object and writes the corresponding output to the output file.
-    Additionally, it calculate the radial distribution function.
+    Additionally, it calculate the radial distribution function and other graphs. ###DA AGGIORNARE
 
     Examples
     --------
@@ -274,16 +274,17 @@ def body(fout, iteration_obj, istogram):
              
         # Extraction of the atomic position
         elif 'ATOMIC_POSITIONS' in line:
-            extract_positions(line, iteration_obj, istogram)
+            extract_positions(line, iteration_obj, graphs)
             generation_switch[3] = False
         
         # Generation of the the text printed on the output file and performing the RDF calculation
         if not any(generation_switch):
             fout.writelines(["%s\n" % i for i in iteration_obj.single_frame()])
-            istogram.RDF()
+            graphs.extracting_values(iteration_obj)
+            graphs.RDF()
             generation_switch = [True] * 4
 
-def xyz_gen(fout, fin, RDF_, groups ):
+def xyz_gen(fout, fin, RDF_, groups):
     """
     Generate an XYZ file from a PWO file, extracting relevant information and updating the output file.
 
@@ -326,14 +327,16 @@ def xyz_gen(fout, fin, RDF_, groups ):
         preamble_switch = preamble(fin, iteration_obj, preamble_switch)
     
     # Setting of the RDF object
-    istogram = RDF(RDF_[0], RDF_[1], [RDF_[2], RDF_[3]], RDF_[4])
-    istogram.matrix = np.column_stack((iteration_obj.ax, iteration_obj.ay, iteration_obj.az))
+    graphs = graph(RDF_[0], RDF_[1], [RDF_[2], RDF_[3]], RDF_[4])
+    graphs.matrix = np.column_stack((iteration_obj.ax, iteration_obj.ay, iteration_obj.az))
     
     # Generation of the configuration at each time
-    body(fout, iteration_obj, istogram)
+    body(fout, iteration_obj, graphs)
 
-    istogram.normalization(iteration_obj)
-    istogram.plot()
+    graphs.normalization(iteration_obj)
+    graphs.plot_RDF()
+    graphs.plot_energy()
+    graphs.plot_forces()
 
 if __name__ == "__main__":
     # Extract setup information

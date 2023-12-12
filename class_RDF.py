@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-class RDF:
+class graph: # da modificare con i nuovi grafici
     """
     Radial Distribution Function (RDF) Calculator.
 
@@ -71,7 +71,7 @@ class RDF:
     """
 
 
-    def __init__(self, filename, Rmax, atoms, N):
+    def __init__(self, filename, Rmax, atoms, N): # da modificare con i nuovi grafici
         """
         Initialize an instance of the 'Class_Name' class.
 
@@ -134,6 +134,7 @@ class RDF:
         100
         """
         self.filename = filename
+
         self.Rmax = Rmax
         self.type = atoms
         self.N = N
@@ -146,6 +147,13 @@ class RDF:
         self.N1 = 0
         self.at2 = np.array([], dtype=float).reshape(0, 3)
         self.N2 = 0
+
+        self.Ek = [0]
+        self.Up = [0]
+        self.T = [0]
+        self.F = np.array([0, 0, 0], dtype=float).reshape(1, 3)
+
+        self.time = [0]
    
 
     def add_position1(self, x, y, z):
@@ -308,7 +316,49 @@ class RDF:
         self.count = np.divide(self.count, self.norm)
 
 
-    def plot(self):
+    '''def kinetic_energy(self, iteration_obj):
+        for gr in iteration_obj.groups:
+            self.Ek[-1] += gr.Ek
+        self.Ek = np.append(self.Ek, 0)
+
+    def potential_energy(self, iteration_obj):
+        for gr in iteration_obj.groups:
+            self.Up[-1] += gr.Ftot
+        self.Up = np.append(self.Up, 0)
+
+
+    def temperature(self, iteration_obj):
+        for gr in iteration_obj.groups:
+            self.T[-1] += gr.T
+        self.T[-1] = self.T[-1]/len(iteration_obj.groups)
+        self.Up = np.append(self.Up, 0)
+
+
+    def force(self, iteration_obj):
+        for gr in iteration_obj.groups:
+            self.force[-1] += gr.Ftot
+        self.force = np.append(self.force, [0, 0, 0])'''
+
+
+    def extracting_values(self, iteration_obj):
+        F = np.array([], dtype=float).reshape(0, 3)
+        for gr in iteration_obj.groups:
+            F = np.append(F, gr.Ftot.reshape(1,3), axis=0)
+            #self.T[-1] += gr.T
+            self.Ek[-1] += gr.Ek
+        #print('tot', F)
+                
+        self.Up = np.append(self.Up, iteration_obj.U_pot)
+        #print('gr', np.sum(F, axis=0).reshape(1,3))
+        #print(self.F)
+        self.F = np.append(self.F, np.sum(F, axis=0).reshape(1, 3), axis=0)
+        #print(self.F)
+        #self.T[-1] = self.T[-1]/len(iteration_obj.groups)
+        self.Ek = np.append(self.Ek, 0)
+        self.time = np.append(self.time, iteration_obj.dt * iteration_obj.N_iteration)
+        
+
+    def plot_RDF(self):
         """
         Plot the radial distribution function.
 
@@ -331,5 +381,49 @@ class RDF:
         ax.set_xlabel('r ($A$)')
         ax.set_ylabel('g(r)')
         ax.grid()
-        plt.savefig(f'{self.filename}.png')
-        plt.show()
+        plt.savefig(f'RDF_{self.filename}.png')
+        #plt.show()
+
+
+    def plot_energy(self):
+        #print('Up: ', self.Up, len(self.Up))
+        #print('\nF: ', self.F, len(self.F))
+        #print('\nEk: ', self.Ek, len(self.Ek))
+        #print('\nTime: ', self.time, len(self.time))
+        fig = plt.figure(figsize=(8, 6))
+        ax = fig.add_subplot(1, 1, 1)
+        ax.plot(self.time, self.Ek, label='Kinetic energy')
+        ax.plot(self.time, self.Up, label='Potential energy')
+        ax.set_xlabel('T (ps)')
+        ax.set_ylabel('E (eV)')
+        ax.grid()
+        ax.legend()
+        plt.savefig(f'E_{self.filename}.png')
+        #plt.show()
+
+    def plot_forces(self):
+        fig = plt.figure(figsize=(8, 6))
+        ax = fig.add_subplot(1, 1, 1)
+        print('F', self.F)
+        Fx = []
+        Fy = []
+        Fz = []
+        for f in self.F:
+            Fx = np.append(Fx, f[0])
+            Fy = np.append(Fy, f[1])
+            Fz = np.append(Fz, f[2])
+
+        print('Fx', Fx)
+        ax.plot(self.time, Fx, label='F$_x$')
+        ax.plot(self.time, Fy, label='F$_y$')
+        ax.plot(self.time, Fz, label='F$_z$')
+        ax.set_xlabel('T (ps)')
+        ax.set_ylabel('F (pN)')
+        ax.grid()
+        ax.legend()
+        plt.savefig(f'F_{self.filename}.png')
+        #plt.show()
+
+
+
+        
