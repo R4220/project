@@ -13,6 +13,6 @@ Fe5
 
 # RDF
 
-Rmax: 10
-Particles: C H
+Rmax: 20
+Particles: Fe2 Fe2
 N: 500

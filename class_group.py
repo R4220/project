@@ -48,7 +48,7 @@ class group:
 
     def Add_atom(self, name, mass):
         self.atoms = np.append(self.atoms, atom(name, mass, self.move, self.id_group))
-    
+    print
     def Add_force(self, x, y, z):
         """
         Add the coordinates of the force acting on the considered atom from the current time step to the force list.
@@ -66,13 +66,11 @@ class group:
             at.generarte_velocity(dt)
             self.velocity = np.append(self.velocity, at.velocity)
         
-        self.Vtot = np.sum(self.velocity, axis=0)
-        print(self.Vtot)
+        self.Vtot = np.sum(self.velocity, axis=0)/len(self.id_tot)
+        #print(self.Vtot)
         for at in self.atoms:
             self.Ek += 0.5 * float(at.mass) * np.sum(np.linalg.norm(at.velocity - self.Vtot, axis=1)**2) * 0.0001036426948415943
         
-        
-
     def Generate(self, dt):
         # Calculate the kinetic energy
         '''for at in self.atoms:

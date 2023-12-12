@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from class_group import group
+#from class_RDF import RDF
 
 class iteration:
     '''
@@ -107,18 +107,26 @@ class iteration:
                         break
                 break
 
-    def positions(self, line):
+    def positions(self, line, istogram):
         atom_type = line[0] 
+
+        if atom_type == istogram.type[0]:
+            #print(line)
+            istogram.add_position1(float(line[1]), float(line[2]), float(line[3]))
+        if atom_type == istogram.type[1]:
+            #print(line)
+            istogram.add_position2(float(line[1]), float(line[2]), float(line[3]))
         
         for gr in self.groups:
             if atom_type in gr.type:
                 for at in gr.atoms:
                     if atom_type == at.name:
+                        #print(line)
                         at.add_position(float(line[1]), float(line[2]), float(line[3]))
                         break
                 break
         
-    def single_frame(self, RDF):
+    def single_frame(self, istogram):
         '''
         This method generates a list in which each element is a line in the output file, representing the current time step.
 

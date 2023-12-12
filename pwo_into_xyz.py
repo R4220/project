@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from class_iteration import iteration
 from class_group import group
+from class_RDF import RDF
 
 def setup():
     '''
@@ -103,12 +104,12 @@ def extract_forces(line, iteration_obj):
         line = fin.readline().split()
         iteration_obj.forces(line)
 
-def extract_positions(line, iteration_obj):
+def extract_positions(line, iteration_obj, istogram):
     for _ in range(iteration_obj.n_atoms):
         line = fin.readline().split()
-        iteration_obj.positions(line)
+        iteration_obj.positions(line, istogram)
 
-def body(iteration_obj):
+def body(iteration_obj, istogram):
     generation_switch = [True] * 4
     for line in fin:
         
@@ -133,14 +134,17 @@ def body(iteration_obj):
              
         # extracting the atomic position
         elif 'ATOMIC_POSITIONS' in line:
-            extract_positions(line, iteration_obj)
+            extract_positions(line, iteration_obj, istogram)
             generation_switch[3] = False
             
         if not any(generation_switch):
-            fout.writelines(["%s\n" % i for i in iteration_obj.single_frame(RDF)])
+            fout.writelines(["%s\n" % i for i in iteration_obj.single_frame(istogram)])
+            #print('ok')
+            istogram.RDF()
+            
             generation_switch = [True] * 4
 
-def xyz_gen(fout, fin, RDF, groups ):
+def xyz_gen(fout, fin, RDF_, groups ):
     '''
     This function checks the fin file (pwo form) to extract all the values and generate the corresponding fout file (xyz form)
 
@@ -157,26 +161,23 @@ def xyz_gen(fout, fin, RDF, groups ):
     while any(preamble_switch):
         preamble_switch = preamble(fin, iteration_obj, preamble_switch)
     
+    istogram = RDF(RDF_[0], RDF_[1], [RDF_[2], RDF_[3]], RDF_[4])
+    #print(iteration_obj.ax, iteration_obj.ay, iteration_obj.az)
+    istogram.matrix = np.column_stack((iteration_obj.ax, iteration_obj.ay, iteration_obj.az))
+    #print(istogram.matrix)
     # defining the configuration at each time
-    body(iteration_obj)
+    body(iteration_obj, istogram)
 
             
         
-    #iteration_obj.normalization()
-    '''fig = plt.figure(figsize=(8, 6))
-    ax = fig.add_subplot(1, 1, 1)
-    ax.plot(iteration_obj.R, iteration_obj.count, label='Power spectrum')
-    ax.set_xlabel('r ($A$)')
-    ax.set_ylabel('g(r)')
-    ax.grid()
-    plt.savefig(f'{filename}.png')
-    plt.show()'''
+    istogram.normalization(iteration_obj)
+    istogram.plot()
     
     return
 
 if __name__ == "__main__":
     filename, Rmax, at1, at2, N, groups = setup()
-    RDF = [Rmax, at1, at2, N]
+    RDF_ = [filename, Rmax, at1, at2, N]
     with open(filename + '.xyz', "w+") as fout:
         with open(filename + '.pwo', 'r') as fin:
-            xyz_gen(fout, fin, RDF, groups)
+            xyz_gen(fout, fin, RDF_, groups)
