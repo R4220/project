@@ -44,7 +44,7 @@ def setup():
                 else:
                     move = True
                 _line = fset.readline().split()
-                groups = np.append(groups, group(_line, id, move))
+                groups = np.append(groups, group(_line, id))
 
     return filename, Rmax, at1, at2, N, groups
 

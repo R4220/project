@@ -1,14 +1,142 @@
-# class RDF
 import numpy as np
 import matplotlib.pyplot as plt
 
 class RDF:
+    """
+    Radial Distribution Function (RDF) Calculator.
+
+    Parameters:
+    -----------
+    filename : str
+        The filename for saving the plot.
+    Rmax : float
+        Maximum distance for RDF calculation.
+    atoms : list of str
+        Atom types for which RDF is calculated.
+    N : int
+        Number of bins for histogram.
+
+    Attributes:
+    -----------
+    filename : str
+        The filename for saving the plot.
+    Rmax : float
+        Maximum distance for RDF calculation.
+    type : list of str
+        Atom types for which RDF is calculated.
+    N : int
+        Number of bins for histogram.
+    count : ndarray
+        Histogram counts for RDF.
+    R : ndarray
+        Radial distance array.
+    dR : float
+        Bin size for histogram.
+    norm : ndarray
+        Normalization array for RDF calculation.
+    condition : bool
+        True if RDF is calculated for the same type of atoms, False otherwise.
+    at1 : ndarray
+        Array to store positions of atoms of type 1.
+    N1 : int
+        Number of atoms of type 1.
+    at2 : ndarray
+        Array to store positions of atoms of type 2.
+    N2 : int
+        Number of atoms of type 2.
+    matrix : ndarray or None
+        Transformation matrix for position conversion.
+
+    Methods:
+    --------
+    add_position1(x, y, z):
+        Add position of an atom of type 1.
+    add_position2(x, y, z):
+        Add position of an atom of type 2.
+    RDF():
+        Calculate the Radial Distribution Function.
+    normalization(iteration_obj):
+        Normalize RDF counts based on the system volume and atom counts.
+    plot():
+        Plot the Radial Distribution Function.
+
+    Examples:
+    ---------
+    rdf_calculator = RDF("example", 10.0, ["A", "A"], 100)
+    rdf_calculator.add_position1(0.0, 0.0, 0.0)
+    rdf_calculator.add_position2(1.0, 1.0, 1.0)
+    rdf_calculator.RDF()
+    rdf_calculator.normalization(iteration_obj)
+    rdf_calculator.plot()
+    """
+
+
     def __init__(self, filename, Rmax, atoms, N):
+        """
+        Initialize an instance of the 'Class_Name' class.
+
+        Parameters
+        ----------
+        filename : str
+            Name of the file.
+        Rmax : float
+            Maximum value for R.
+        atoms : list
+            List of atoms.
+        N : int
+            Number of elements.
+
+        Attributes
+        ----------
+        filename : str
+            Name of the file.
+        Rmax : float
+            Maximum value for R.
+        type : list
+            List of atoms.
+        N : int
+            Number of bins.
+        count : numpy.ndarray
+            Array of zeros with size N.
+        R : numpy.ndarray
+            Array containing values from 0 to Rmax with N elements.
+        dR : float
+            Value of the second element in R.
+        norm : numpy.ndarray
+            Normalized array based on R values.
+        condition : bool
+            Condition based on the equality of the two elements in atoms.
+        at1 : numpy.ndarray
+            Bidimensional array for atoms type 1.
+        N1 : int
+            Number of elements in at1.
+        at2 : numpy.ndarray
+            Bidimensional array for atoms type 2.
+        N2 : int
+            Number of elements in at2.
+        matrix : NoneType
+            Placeholder for a matrix attribute.
+
+        Notes
+        -----
+        This class is designed to represent a certain type of object, providing various attributes for configuration and calculations.
+
+        Examples
+        --------
+        >>> instance = ClassName("example.txt", 10.0, ["Oxygen", "Oxygen"], 100)
+        >>> print(instance.filename)
+        'example.txt'
+        >>> print(instance.Rmax)
+        10.0
+        >>> print(instance.type)
+        ['Oxygen', 'Oxygen']
+        >>> print(instance.N)
+        100
+        """
         self.filename = filename
         self.Rmax = Rmax
         self.type = atoms
         self.N = N
-
         self.count = np.zeros(N)
         self.R = np.linspace(0, Rmax, N)
         self.dR = self.R[1]
@@ -18,121 +146,185 @@ class RDF:
         self.N1 = 0
         self.at2 = np.array([], dtype=float).reshape(0, 3)
         self.N2 = 0
-
-        self.matrix = None      
+   
 
     def add_position1(self, x, y, z):
+        """
+        Add the coordinates of the considered atom to the list 'at1'.
+
+        Parameters
+        ----------
+        x : float
+            X-coordinate of the atom.
+        y : float
+            Y-coordinate of the atom.
+        z : float
+            Z-coordinate of the atom.
+
+        Notes
+        -----
+        This method appends the provided coordinates (x, y, z) to the list 'at1' representing the positions of the atom.
+
+        Examples
+        --------
+        >>> instance = ClassName("example.txt", 10.0, ["Oxygen", "Oxygen"], 100)
+        >>> instance.add_position1(1.0, 2.0, 3.0)
+        >>> print(instance.at1)
+        array([[1.0, 2.0, 3.0]])
+        """
         self.at1 = np.vstack([self.at1, np.array([x, y, z], dtype=float)])
+
     
     def add_position2(self, x, y, z):
+        """
+        Add the coordinates of the considered atom to the list 'at2'.
+
+        Parameters
+        ----------
+        x : float
+            X-coordinate of the atom.
+        y : float
+            Y-coordinate of the atom.
+        z : float
+            Z-coordinate of the atom.
+
+        Notes
+        -----
+        This method appends the provided coordinates (x, y, z) to the list 'at2' representing the positions of the atom.
+
+        Examples
+        --------
+        >>> group_instance = group("example_type", 1, True)
+        >>> group_instance.Add_atom("atom_1", 12.0)
+        >>> group_instance.atoms[0].add_position2(1.0, 2.0, 3.0)
+        >>> print(group_instance.atoms[0].at2)
+        array([[1.0, 2.0, 3.0]])
+        """
         self.at2 = np.vstack([self.at2, np.array([x, y, z], dtype=float)])
 
-    def RDF(self):
-        '''
-        Calculate distances and store them in the list dist for RDF calculation. 
-        Two cases are present, defined by the boolean variable e:
-        - If e is True, RDF is calculated within the same group.
-        - If e is False, RDF is calculated between two different groups.
 
-        Parameters:
-        - RDF: List containing parameters for RDF calculation.
-     
-        Return:
-        - dist: Array of distances.
-        '''
+    def RDF(self):
+        """
+        Calculate the radial distribution function (RDF) for the group.
+
+        Notes
+        -----
+        This method calculates the distances between the two defined atomic species and adds them to the counting list 'count'.
+        The periodic conditions are used to account for the minimum image criterion. In order to do so, reducted coordinates are also used.
+
+        Examples
+        --------
+        >>> group_instance = group("example_type", 1, True)
+        >>> group_instance.Add_atom("atom_1", 12.0)
+        >>> group_instance.Add_atom("atom_2", 15.0)
+        >>> group_instance.atoms[0].add_position1(1.0, 2.0, 3.0)
+        >>> group_instance.atoms[1].add_position2(2.0, 3.0, 4.0)
+        >>> rdf_values = group_instance.RDF()
+        >>> print(rdf_values)
+        array([0. , 0.5, 1. , 0. , 0. ])
+        """
         dist = []
 
+        # Equal atomic species
         if self.condition:
             n = len(self.at1)
-            #print(self.at1)
-            #print(self.at2)
             rpos = self.at1
-            #pos = rpos
-
-            for i, _pos in enumerate(self.at1):
-                rpos[i] = np.dot(np.linalg.inv(self.matrix), _pos)
-                #print(i,'\npos\n', _pos, '\nrpos\n', rpos[i])
             
+            # Generate the reducted coordinates
+            for i, _pos in enumerate(self.at1):
+                    rpos[i] = np.dot(np.linalg.inv(self.matrix), _pos)
+
+            # Calculate the distances
             for k in range(n - 1):
-                #print(rpos)
                 rdiff = rpos[k+1:] - rpos[k]
-                #print(rdiff)
                 int_pos = np.round(rdiff)
-                #print(int_pos)
                 rdiff = rdiff - int_pos
-                #print(rdiff)
                 diff = rdiff
                 for i, _rpos in enumerate(rdiff):
-                    diff[i] = np.dot(self.matrix, _rpos)
-                    #print(_rpos)
-                #print(diff)
+                        diff[i] = np.dot(self.matrix, _rpos)
                 r = np.linalg.norm(diff)
-                #print(r)
-                  #print('iter')
                 dist.extend(r[r < self.Rmax])
-            #print(dist)
-        else:
-            n1 = len(self.at1)
-            n2 = len(self.at2)
-            #print(self.at1)
-            #print(self.at2)
 
+        # Different atomic species
+        else:
             rpos1 = self.at1
             rpos2 = self.at2
-
+            
+            # Generate the reducted coordinates
             for i, _pos in enumerate(self.at1):
                 rpos1[i] = np.dot(np.linalg.inv(self.matrix), _pos)
             for i, _pos in enumerate(self.at2):
                 rpos2[i] = np.dot(np.linalg.inv(self.matrix), _pos)
 
+            # Calculate the distances
             for i in rpos1:
                 rdiff = i - rpos2
                 rdiff = rdiff - np.round(rdiff)
                 diff = rdiff
                 for i, _rpos in enumerate(rdiff):
                     diff[i] = np.dot(self.matrix, _rpos)
-                    #print(_rpos)
-                #print(diff)
                 r = np.linalg.norm(diff)
-                #print(r)
-                #print('iter')
                 dist.extend(r[r < self.Rmax])
-            #print(dist)
-        
+
         self.N1 = len(self.at1)
         self.N2 = len(self.at2)
-        
+
+        self.count += np.histogram(dist, bins=self.N, range=(0, self.Rmax))[0]
+
+        # Reset the arrays for the next time step
         self.at1 = np.array([], dtype=float).reshape(0, 3)
         self.at2 = np.array([], dtype=float).reshape(0, 3)
 
-        #dist = np.sort(dist)
-        self.count += np.histogram(dist, bins=self.N, range=(0, self.Rmax))[0]
-        #return dist
-    
 
     def normalization(self, iteration_obj):
-        '''
-        Normalize the count variable.
-        The normalization process involves dividing the count variable by a normalization factor.
-        The normalization factor (rho) is calculated based on the volume of the simulation cell and the number of atoms involved in the RDF calculation. The specific calculation depends on whether the RDF is calculated between atoms of the same group (e=True) or different groups (e=False).
-        - If e=True, rho = (Number of atoms in group 1)^2 / Volume
-        - If e=False, rho = (Number of atoms in group 1 * Number of atoms in group 2) / Volume
+        """
+        Normalize the radial distribution function (RDF).
 
-        The normalized count variable is then obtained by dividing the original count by the normalization factor.
-        '''
+        Parameters
+        ----------
+        iteration_obj : object
+            Object representing the iteration and containing necessary information.
+
+        Notes
+        -----
+        This method calculates the volume 'V' and uses it to normalize the radial distribution function 'count' by dividing it by the appropriate density ('rho_1').
+        
+        Examples
+        --------
+        >>> group_instance = group("example_type", 1, True)
+        >>> group_instance.Add_atom("atom_1", 12.0)
+        >>> group_instance.Add_atom("atom_2", 15.0)
+        >>> iteration_obj = Iteration()  # Assuming there is a class named 'Iteration'
+        >>> group_instance.normalization(iteration_obj)
+        """
         V = np.dot(iteration_obj.az, np.cross(iteration_obj.ax, iteration_obj.ay)) ** 2
 
-        if self.condition == True:
-            print(V, '\n' , self.N1,'\n', iteration_obj.N_iteration)
-            rho_1 = V / (self.N1 * (self.N1 -1 ) * iteration_obj.N_iteration)
+        if self.condition:
+            rho_1 = V / (self.N1 * (self.N1 - 1) * iteration_obj.N_iteration)
         else:
             rho_1 = V / (self.N1 * self.N2 * iteration_obj.N_iteration)
 
         self.norm = rho_1 * self.norm
         self.count = np.divide(self.count, self.norm)
-        ''' Check if the normalization process is correctly implemented '''
+
 
     def plot(self):
+        """
+        Plot the radial distribution function.
+
+        Notes
+        -----
+        This method generates a plot of the radial distribution function (RDF) and saves it as an image file named '{filename}.png'.
+
+        Examples
+        --------
+        >>> group_instance = group("example_type", 1, True)
+        >>> group_instance.Add_atom("atom_1", 12.0)
+        >>> group_instance.Add_atom("atom_2", 15.0)
+        >>> group_instance.RDF()
+        >>> group_instance.normalization(iteration_obj)  # Assuming there is an 'iteration_obj'
+        >>> group_instance.plot()
+        """
         fig = plt.figure(figsize=(8, 6))
         ax = fig.add_subplot(1, 1, 1)
         ax.plot(self.R, self.count, label='Power spectrum')
