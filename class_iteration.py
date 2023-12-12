@@ -1,32 +1,78 @@
-# class_iteration.py
-
 import numpy as np
 
-#from class_RDF import RDF
-
 class iteration:
-    '''
-    This class represents a single step during a molecular dynamics.
+    """
+    Represents a single step during molecular dynamics.
 
-    Attributes:
-    - n_atoms: total number of atoms in the simulation
-    - cell_dim: dimension of the cell (a.u)
-    - ax, ay, az: lattice vectors 
-    - L: cell dimension [Lx, Ly, Lz]
-    - alat_to_angstrom: conversion between Alat unit and Angstrom
-    - t_past: time instant of the last time step
-    - t: time instant of the current time step
-    - U_pot: potential energy
-    - block: array in which the lines of the pwo file about the current file are stored
-    - groups: list of the groups in the dynamic
-    - RDF_atoms: atoms for which the RDF is calculated 
-    - switch_at: boolean that turns on or off the acquisition of the atomic positions (default = False)
-    - count: array of the counts during the RDF calculation
-    - R: array representing the possible distances considered in the RDF calculation
-    - dR: bin length in the RDF histogram
-    - norm: normalization values for the RDF
-    - e: boolean value representing if the atoms for which the RDF is calculated are the same (True) or not (False)
-    '''
+    Parameters
+    ----------
+    groups : list
+        List of group instances in the system.
+
+    Attributes
+    ----------
+    groups : list
+        List of group instances in the system.
+    n_atoms : int
+        Number of atoms in the system.
+    n_type : int
+        Number of different atom types in the system.
+    ax, ay, az : numpy.ndarray
+        Lattice vectors.
+    U_pot : float
+        Potential energy of the system.
+    dt : float
+        Time interval.
+    N_iteration : int
+        Number of iterations.
+    alat_to_angstrom : float
+        Conversion factor from lattice constant to angstrom.
+    Ryau_to_pN : float
+        Conversion factor from Rydberg atomic units to piconewtons.
+
+    Methods
+    -------
+    convert_alat_to_angstrom(celldim)
+        Convert lattice constant from Alat unit to Angstrom.
+    set_mass(_type, _mass)
+        Set the mass of atoms in the specified group.
+    count_group(line)
+        Count the number of atoms for each group and extract the initial position.
+    set_DOF()
+        Set the degrees of freedom for each group in the system.
+    forces(line)
+        Extract the force acting on atoms at a specific time.
+    positions(line, istogram)
+        Extract and store the positions of atoms at a determined time.
+    single_frame()
+        Generate a list where each element is a line in the output file, representing the current time step.
+
+    Examples
+    --------
+    >>> group_instance_1 = group("O H", 0)
+    >>> group_instance_2 = group("N", 2)
+    >>> iteration_instance = iteration([group_instance_1, group_instance_2])
+    >>> print(iteration_instance.n_atoms)
+    0
+    >>> print(iteration_instance.n_type)
+    0
+    >>> print(iteration_instance.ax)
+    [0. 0. 0.]
+    >>> print(iteration_instance.ay)
+    [0. 0. 0.]
+    >>> print(iteration_instance.az)
+    [0. 0. 0.]
+    >>> print(iteration_instance.U_pot)
+    0
+    >>> print(iteration_instance.dt)
+    0.0
+    >>> print(iteration_instance.N_iteration)
+    0
+    >>> print(iteration_instance.alat_to_angstrom)
+    0.0
+    >>> print(iteration_instance.Ryau_to_pN)
+    41778.2489644
+    """
 
     def __init__(self, groups):
         """
@@ -69,11 +115,9 @@ class iteration:
 
         Examples
         --------
-        >>> group_instance_1 = group("example_type_1", 1)
-        >>> group_instance_2 = group("example_type_2", 2)
+        >>> group_instance_1 = group("O H", 0)
+        >>> group_instance_2 = group("N", 2)
         >>> iteration_instance = iteration([group_instance_1, group_instance_2])
-        >>> print(iteration_instance.groups)
-        [group_instance_1, group_instance_2]
         >>> print(iteration_instance.n_atoms)
         0
         >>> print(iteration_instance.n_type)
