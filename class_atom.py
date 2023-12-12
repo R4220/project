@@ -38,7 +38,7 @@ class atom:
 
     Notes
     -----
-    This class sets up an 'atom' object with the specified attributes, including the atom's name, mass, and the identification number of its group.
+    This class sets up an 'atom' object with the specified attributes, including the atom's name, mass and the identification number of its group.
     Additionally, it initializes other attributes like 'DOF', 'N', 'id', 'position_past', 'position', 'velocity', and 'force' with default values.
 
     Examples
@@ -91,18 +91,16 @@ class atom:
 
         Notes
         -----
-        This constructor sets up an 'atom' object with the specified attributes, including the atom's name, mass, movement status, and the identification number of its group. 
+        This constructor sets up an 'atom' object with the specified attributes, including the atom's name, mass and the identification number of its group. 
         Additionally, it initializes other attributes like 'DOF', 'N', 'id', 'position_past', 'position', 'velocity', and 'force' with default values.
 
         Examples
         --------
-        >>> atom_instance = atom("example", 12.0, True, 1)
+        >>> atom_instance = atom("example", 12.0, 1)
         >>> print(atom_instance.name)
         'example'
         >>> print(atom_instance.mass)
         12.0
-        >>> print(atom_instance.move)
-        True
         >>> print(atom_instance.id_group)
         1
         """

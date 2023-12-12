@@ -61,7 +61,7 @@ def preamble(fin, iteration_obj, preamble_switch):
         iteration_obj.n_type = int(line.split()[5])
         preamble_switch[1] = False
     elif 'celldm(1)= ' in line:
-        iteration_obj.Alat_to_Angstrom(float(line.split()[1]))
+        iteration_obj.convert_alat_to_angstrom(float(line.split()[1]))
         preamble_switch[2] = False
     elif 'a(1)' in line:
         x, y, z = map(float, line.split()[3:6])

@@ -30,7 +30,7 @@ class group:
 
     Methods
     -------
-    __init__(type, id_group, move)
+    __init__(type, id_group)
         Initialize a Group instance.
     Add_atom(name, mass)
         Add an atom to the group.
@@ -47,13 +47,11 @@ class group:
 
     Examples
     --------
-    >>> group_instance = group("example_type", 1, True)
+    >>> group_instance = group("C O H", 0)
     >>> print(group_instance.type)
-    'example_type'
-    >>> print(group_instance.move)
-    True
+    'C O H'
     >>> print(group_instance.id_group)
-    1
+    0
     """
 
     def __init__(self, type, id_group):
@@ -66,8 +64,6 @@ class group:
             Atomic type in the group.
         id_group : int
             Identification number of the group.
-        move : bool
-            Movement status of the group.
 
         Attributes
         ----------
@@ -75,8 +71,6 @@ class group:
             List of atom instances in the group.
         type : str
             Atomic type in the group.
-        move : bool
-            Movement status of the group.
         id_group : int
             Identification number of the group.
         id_tot : ndarray
@@ -96,18 +90,16 @@ class group:
 
         Notes
         -----
-        This constructor sets up a 'Group' object with the specified attributes, including the group's type, movement status, and the identification number of the group.
+        This constructor sets up a 'Group' object with the specified attributes, including the group's type and the identification number of the group.
         Additionally, it initializes other attributes like 'atoms', 'id_tot', 'DOF', 'Ek', 'Ftot', 'force', 'Vtot', and 'velocity' with default values.
 
         Examples
         --------
-        >>> group_instance = group("example_type", 1, True)
+        >>> group_instance = group("C O H", 0)
         >>> print(group_instance.type)
-        'example_type'
-        >>> print(group_instance.move)
-        True
+        'C O H'
         >>> print(group_instance.id_group)
-        1
+        0
         """
         self.atoms = []
         self.type = type
@@ -230,6 +222,8 @@ class group:
         for at in self.atoms:
             self.Ek += 0.5 * float(at.mass) * np.sum(np.linalg.norm(at.velocity - self.Vtot, axis=1) ** 2) * 0.0001036426948415943
 
+        # Reset the arrays for the next time step
+        self.velocity = np.array([], dtype=float).reshape(0, 3)
         
     def Generate(self, dt):
         """
