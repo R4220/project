@@ -148,12 +148,12 @@ class graph: # da modificare con i nuovi grafici
         self.at2 = np.array([], dtype=float).reshape(0, 3)
         self.N2 = 0
 
-        self.Ek = [0]
-        self.Up = [0]
-        self.T = [0]
-        self.F = np.array([0, 0, 0], dtype=float).reshape(1, 3)
+        self.Ek = []
+        self.Up = []
+        self.T = []
+        self.F = np.array([], dtype=float).reshape(0, 3)
 
-        self.time = [0]
+        self.time = []
    
 
     def add_position1(self, x, y, z):
@@ -316,45 +316,50 @@ class graph: # da modificare con i nuovi grafici
         self.count = np.divide(self.count, self.norm)
 
 
-    '''def kinetic_energy(self, iteration_obj):
-        for gr in iteration_obj.groups:
-            self.Ek[-1] += gr.Ek
-        self.Ek = np.append(self.Ek, 0)
-
-    def potential_energy(self, iteration_obj):
-        for gr in iteration_obj.groups:
-            self.Up[-1] += gr.Ftot
-        self.Up = np.append(self.Up, 0)
-
-
-    def temperature(self, iteration_obj):
-        for gr in iteration_obj.groups:
-            self.T[-1] += gr.T
-        self.T[-1] = self.T[-1]/len(iteration_obj.groups)
-        self.Up = np.append(self.Up, 0)
-
-
-    def force(self, iteration_obj):
-        for gr in iteration_obj.groups:
-            self.force[-1] += gr.Ftot
-        self.force = np.append(self.force, [0, 0, 0])'''
-
-
     def extracting_values(self, iteration_obj):
+        """
+        Extract and store relevant values from the iteration object.
+
+        Parameters
+        ----------
+        iteration_obj : iteration
+            An instance of the `iteration` class containing simulation data.
+
+        Notes
+        -----
+        This method extracts and stores forces (`Ftot`), kinetic energy (`Ek`), potential energy (`Up`),
+        total force (`F`), and simulation time (`time`) from the provided `iteration_obj` for each group in the system.
+
+        Examples
+        --------
+        >>> group_instance = group("example_type", 1)
+        >>> iteration_instance = iteration([group_instance])
+        >>> group_instance.Ek = np.array([10.0])  # Initial kinetic energy
+        >>> group_instance.Ftot = np.array([[1.0, 2.0, 3.0]])  # Initial total force
+        >>> iteration_instance.U_pot = 50.0  # Initial potential energy
+        >>> iteration_instance.N_iteration = 1  # Initial number of iterations
+        >>> iteration_instance.dt = 0.001  # Initial time interval
+        >>> iteration_instance.extracting_values(iteration_instance)
+        >>> print(group_instance.Ek)
+        [10.0 20.0]  # Updated kinetic energy
+        >>> print(group_instance.Up)
+        [50.0]  # Updated potential energy
+        >>> print(group_instance.F)
+        [[1.0 2.0 3.0]
+         [0.0 0.0 0.0]]  # Updated total force
+        >>> print(group_instance.time)
+        [0.0 0.001]  # Updated simulation time
+        """
         F = np.array([], dtype=float).reshape(0, 3)
+        self.Ek = np.append(self.Ek, 0)
         for gr in iteration_obj.groups:
             F = np.append(F, gr.Ftot.reshape(1,3), axis=0)
             #self.T[-1] += gr.T
             self.Ek[-1] += gr.Ek
-        #print('tot', F)
-                
+                        
         self.Up = np.append(self.Up, iteration_obj.U_pot)
-        #print('gr', np.sum(F, axis=0).reshape(1,3))
-        #print(self.F)
         self.F = np.append(self.F, np.sum(F, axis=0).reshape(1, 3), axis=0)
-        #print(self.F)
         #self.T[-1] = self.T[-1]/len(iteration_obj.groups)
-        self.Ek = np.append(self.Ek, 0)
         self.time = np.append(self.time, iteration_obj.dt * iteration_obj.N_iteration)
         
 
@@ -362,18 +367,22 @@ class graph: # da modificare con i nuovi grafici
         """
         Plot the radial distribution function.
 
+        Generates a plot of the radial distribution function (RDF) and saves it as an image file named 'RDF_{filename}.png'.
+
         Notes
         -----
-        This method generates a plot of the radial distribution function (RDF) and saves it as an image file named '{filename}.png'.
+        This method uses Matplotlib to create a plot of the RDF based on the calculated radial distances and counts. The plot
+        is saved as an image file in PNG format.
 
         Examples
         --------
-        >>> group_instance = group("example_type", 1, True)
-        >>> group_instance.Add_atom("atom_1", 12.0)
-        >>> group_instance.Add_atom("atom_2", 15.0)
-        >>> group_instance.RDF()
-        >>> group_instance.normalization(iteration_obj)  # Assuming there is an 'iteration_obj'
-        >>> group_instance.plot()
+        To generate and save the RDF plot:
+
+        >>> instance = graph("example", 10.0, ["Oxygen", "Oxygen"], 100)
+        >>> instance.RDF()  # Assuming RDF values have been calculated
+        >>> instance.plot_RDF()
+
+        The RDF plot will be saved as 'RDF_example.png'.
         """
         fig = plt.figure(figsize=(8, 6))
         ax = fig.add_subplot(1, 1, 1)
@@ -382,14 +391,28 @@ class graph: # da modificare con i nuovi grafici
         ax.set_ylabel('g(r)')
         ax.grid()
         plt.savefig(f'RDF_{self.filename}.png')
-        #plt.show()
 
 
     def plot_energy(self):
-        #print('Up: ', self.Up, len(self.Up))
-        #print('\nF: ', self.F, len(self.F))
-        #print('\nEk: ', self.Ek, len(self.Ek))
-        #print('\nTime: ', self.time, len(self.time))
+        """
+        Plot the graph of kinetic energy and potential energy in function of time.
+
+        Generates a plot of the kinetic energy and potential energy as a function of time and saves it as an image file named 'E_{filename}.png'.
+
+        Notes
+        -----
+        This method uses Matplotlib to create a plot of the kinetic energy and potential energy over time. The plot is saved as an image file in PNG format.
+
+        Examples
+        --------
+        To generate and save the energy plot:
+
+        >>> instance = graph("example", 10.0, ["Oxygen", "Oxygen"], 100)
+        >>> instance.extracting_values(iteration_obj)  # Assuming values have been extracted
+        >>> instance.plot_energy()
+
+        The energy plot will be saved as 'E_example.png'.
+        """
         fig = plt.figure(figsize=(8, 6))
         ax = fig.add_subplot(1, 1, 1)
         ax.plot(self.time, self.Ek, label='Kinetic energy')
@@ -399,30 +422,60 @@ class graph: # da modificare con i nuovi grafici
         ax.grid()
         ax.legend()
         plt.savefig(f'E_{self.filename}.png')
-        #plt.show()
+
 
     def plot_forces(self):
-        fig = plt.figure(figsize=(8, 6))
-        ax = fig.add_subplot(1, 1, 1)
-        print('F', self.F)
+        """
+        Plot the forces acting on the system in function of time.
+
+        Notes
+        -----
+        This method generates a plot of the forces (components along x, y, and z axes) acting on the system over time
+        and saves it as an image file named 'F_{filename}.png'.
+
+        Examples
+        --------
+        instance = ClassName("example.txt", 10.0, ["Oxygen", "Oxygen"], 100)
+        instance.add_position1(1.0, 2.0, 3.0)
+        instance.add_position2(2.0, 3.0, 4.0)
+        instance.RDF()
+        instance.normalization(iteration_obj)  # Assuming there is an 'iteration_obj'
+        instance.plot_forces()
+        """
+        fig = plt.figure(figsize=(8, 15))
+        
+        #ax = fig.add_subplot(1, 1, 1)
         Fx = []
         Fy = []
         Fz = []
         for f in self.F:
-            Fx = np.append(Fx, f[0])
-            Fy = np.append(Fy, f[1])
-            Fz = np.append(Fz, f[2])
+                Fx = np.append(Fx, f[0])
+                Fy = np.append(Fy, f[1])
+                Fz = np.append(Fz, f[2])
 
-        print('Fx', Fx)
+        ax = fig.add_subplot(3, 1, 1)
         ax.plot(self.time, Fx, label='F$_x$')
+        ax.set_xlabel('T (ps)')
+        ax.set_ylabel('F (pN)')
+        ax.grid()
+        ax.legend()
+
+        ax = fig.add_subplot(3, 1, 2)
         ax.plot(self.time, Fy, label='F$_y$')
+        ax.set_xlabel('T (ps)')
+        ax.set_ylabel('F (pN)')
+        ax.grid()
+        ax.legend()
+
+        ax = fig.add_subplot(3, 1, 3)
         ax.plot(self.time, Fz, label='F$_z$')
         ax.set_xlabel('T (ps)')
         ax.set_ylabel('F (pN)')
         ax.grid()
         ax.legend()
+        
         plt.savefig(f'F_{self.filename}.png')
-        #plt.show()
+
 
 
 

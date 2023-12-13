@@ -3,7 +3,7 @@ import numpy as np
 
 from class_iteration import iteration
 from class_group import group
-from class_RDF import graph
+from class_graph import graph
 
 
 def setup():
@@ -139,7 +139,7 @@ def preamble(fin, iteration_obj, preamble_switch):
         iteration_obj.az = a
         preamble_switch[5] = False
     
-    # Settibg if the mass of the atoms inside the groups
+    # Setting of the mass of the atoms inside the groups
     elif 'atomic species   valence' in line:
         for _ in range(iteration_obj.n_type):
             line = fin.readline().split()
@@ -238,7 +238,7 @@ def body(fout, iteration_obj, graphs):
     -----
     This function reads the input file line by line, extracting relevant information such as potential energy, forces on atoms, time step, iteration number, and atomic positions.
     It updates the information in the iteration object and writes the corresponding output to the output file.
-    Additionally, it calculate the radial distribution function and other graphs. ###DA AGGIORNARE
+    Additionally, it calculate the radial distribution function and add the parameter of the timestep in order to draw the graph of energies, temperature and forces in function of time.
 
     Examples
     --------
@@ -307,7 +307,7 @@ def xyz_gen(fout, fin, RDF_, groups):
     -----
     This function checks the input PWO file to extract all the values and generates the corresponding output XYZ file.
     It initializes the iteration object and RDF histogram object, extracts setup information, and then iterates through the file to extract and update information.
-    The RDF is calculated, normalized, and plotted at the end.
+    The RDF is calculated, normalized, and plotted at the end within the other graphs.
 
     Examples
     --------

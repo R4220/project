@@ -137,7 +137,7 @@ class iteration:
         >>> print(iteration_instance.alat_to_angstrom)
         0.0
         >>> print(iteration_instance.Ryau_to_pN)
-        41778.2489644
+        41193.647367103644
         """
         self.groups = groups
         self.n_atoms = 0
@@ -149,7 +149,7 @@ class iteration:
         self.dt = 0.0
         self.N_iteration = 0
         self.alat_to_angstrom = 0.0
-        self.Ryau_to_pN = 4.17782489644e4
+        self.Ryau_to_pN = 41193.647367103644
 
   
     def convert_alat_to_angstrom(self, celldim):

@@ -220,10 +220,11 @@ class group:
 
         # Removing the mean velocity to calculate the thermal energy
         for at in self.atoms:
+            #self.Ek += 0.5 * float(at.mass) * np.sum(np.linalg.norm(at.velocity, axis=1) ** 2) * 0.0001036426948415943
             self.Ek += 0.5 * float(at.mass) * np.sum(np.linalg.norm(at.velocity - self.Vtot, axis=1) ** 2) * 0.0001036426948415943
-
         # Reset the arrays for the next time step
         self.velocity = np.array([], dtype=float).reshape(0, 3)
+        
         
     def Generate(self, dt):
         """
