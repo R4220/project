@@ -19,6 +19,8 @@ class group:
         Degree of freedom of the group.
     Ek : float
         Kinetic energy of the group.
+    T : list
+        Temperatures of the group.
     Ftot : numpy.ndarray
         Total force acting on the group.
     force : numpy.ndarray
@@ -79,6 +81,8 @@ class group:
             Degree of freedom of the group.
         Ek : float
             Kinetic energy of the group.
+        T : list
+            Temperatures of the group.
         Ftot : ndarray
             Total force acting on the group.
         force : ndarray
@@ -107,9 +111,12 @@ class group:
         self.id_tot = np.array([], dtype=int)
         self.DOF = 0.0
         self.Ek = 0.0
+        self.T = []
 
         self.Ftot = np.array([], dtype=float).reshape(0, 3)
         self.force = np.array([], dtype=float).reshape(0, 3)
+        self.Ftot_store = np.array([], dtype=float).reshape(0, 3)
+
 
         self.Vtot = np.array([], dtype=float).reshape(0, 3)
         self.velocity = np.array([], dtype=float).reshape(0, 3)
@@ -271,10 +278,11 @@ class group:
         self.Kinetic_energy(dt)
 
         # Calculate temperature
-        self.T = (2 * self.Ek) / (self.DOF * 8.617333262145e-5)
+        self.T = np.append(self.T, ((2 * self.Ek) / (self.DOF * 8.617333262145e-5)))
 
         # Calculate total force
         self.Ftot = np.sum(self.force, axis=0)
+        self.Ftot_store = np.append(self.Ftot_store, self.Ftot.reshape(1,3), axis=0)
 
         # Generate output line
         body = np.array([], dtype=str)

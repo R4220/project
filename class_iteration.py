@@ -42,7 +42,7 @@ class iteration:
         Set the degrees of freedom for each group in the system.
     forces(line)
         Extract the force acting on atoms at a specific time.
-    positions(line, istogram)
+    positions(line, graphs)
         Extract and store the positions of atoms at a determined time.
     single_frame()
         Generate a list where each element is a line in the output file, representing the current time step.
@@ -81,32 +81,32 @@ class iteration:
         Parameters
         ----------
         groups : list
-                List of group instances in the system.
+            List of group instances in the system.
 
         Attributes
         ----------
         groups : list
-                List of group instances in the system.
+            List of group instances in the system.
         n_atoms : int
-                Number of atoms in the system.
+            Number of atoms in the system.
         n_type : int
-                Number of different atom types in the system.
+            Number of different atom types in the system.
         ax : numpy.ndarray
-                Vector representing the 'ax' lattice vector.
+            Vector representing the 'ax' lattice vector.
         ay : numpy.ndarray
-                Vector representing the 'ay' lattice vector.
+            Vector representing the 'ay' lattice vector.
         az : numpy.ndarray
-                Vector representing the 'az' lattice vector.
+            Vector representing the 'az' lattice vector.
         U_pot : float
-                Potential energy of the system.
+            Potential energy of the system.
         dt : float
-                Time interval.
+            Time interval.
         N_iteration : int
-                Number of iterations.
+            Number of iterations.
         alat_to_angstrom : float
-                Conversion factor from lattice constant to angstrom.
+            Conversion factor from lattice constant to angstrom.
         Ryau_to_pN : float
-                Conversion factor from Rydberg atomic units to piconewtons.
+            Conversion factor from Rydberg atomic units to piconewtons.
 
         Notes
         -----
@@ -286,7 +286,8 @@ class iteration:
                         break
                 break
 
-    def positions(self, line, istogram):
+
+    def positions(self, line, graphs):
         """
         Extract and store the positions of atoms at a determined time.
 
@@ -294,28 +295,28 @@ class iteration:
         ----------
         line : list
             The line containing the atom positions.
-        istogram : RDF
-            The RDF instance with which the radial distribution function is calculated.
+        graphs : graph
+            The graph instance with which the radial distribution function is calculated.
 
         Notes
         -----
         This method iterates over the groups in the system, finds the corresponding atom, and adds the position to the atom.
-        Additionally, it checks the atom type and adds positions to the RDF istance 'istogram' (if applicable).
+        Additionally, it checks the atom type and adds positions to the graph istance 'graphs' (if applicable).
 
         Examples
         --------
         >>> iteration_instance = iteration(['C', 'H', 'P', 'K'])
         >>> line = [0, 1.0, 2.0, 3.0, ...]
-        >>> istogram = RDF("filename", 10, ['C', 'H'], 500)
-        >>> iteration_instance.positions(line, istogram)
+        >>> graphs = graph("filename", 10, ['C', 'H'], 500)
+        >>> iteration_instance.positions(line, graphs)
         """
         atom_type = line[0] 
 
         # Check if for the atom in line RDF will be calculated
-        if atom_type == istogram.type[0]:
-            istogram.add_position1(float(line[1]), float(line[2]), float(line[3]))
-        if atom_type == istogram.type[1]:
-            istogram.add_position2(float(line[1]), float(line[2]), float(line[3]))
+        if graphs.type[0] in atom_type:
+            graphs.add_position1(float(line[1]), float(line[2]), float(line[3]))
+        if graphs.type[1] in atom_type:
+            graphs.add_position2(float(line[1]), float(line[2]), float(line[3]))
         
         # Check on the groups
         for gr in self.groups:
@@ -327,6 +328,7 @@ class iteration:
                         break
                 break
         
+
     def single_frame(self):
         """
         Generate a list where each element is a line in the output file, representing the current time step.
@@ -358,7 +360,7 @@ class iteration:
         # Generate the information for each group  of the time step
         for gr in self.groups:            
             body = gr.Generate(self.dt)
-            text[1] = text[1] + f' Ek{gr.id_group}(ev)={gr.Ek:.3f} DOF{gr.id_group}={gr.DOF} T{gr.id_group}(K)={gr.T:.3f} Ftot{gr.id_group}(pN)=\"{gr.Ftot[0]:.3f}, {gr.Ftot[1]:.3f}, {gr.Ftot[2]:.3f}\"'
+            text[1] = text[1] + f' Ek{gr.id_group}(ev)={gr.Ek:.3f} DOF{gr.id_group}={gr.DOF} T{gr.id_group}(K)={gr.T[-1]:.3f} Ftot{gr.id_group}(pN)=\"{gr.Ftot[0]:.3f}, {gr.Ftot[1]:.3f}, {gr.Ftot[2]:.3f}\"'
             text.extend(body)
 
         return text

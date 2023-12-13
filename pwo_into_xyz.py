@@ -250,16 +250,16 @@ def body(fout, iteration_obj, graphs):
     >>> fin.close()
     >>> fout.close()
     """
-    generation_switch = [True] * 4
+    generation_switch = [True] * 5
     for line in fin:
         
         # Extraction of the potential energy
         if '!    total energy' in line:
-            iteration_obj.U_pot = float(line.split()[4])
+            iteration_obj.U_pot = float(line.split()[4]) * 13.605703976
             generation_switch[0] = False
 
         # Extraction of the forces on atoms
-        if 'Forces a' in line:
+        elif 'Forces a' in line:
             extract_forces(line, iteration_obj)
             generation_switch[1] = False
 
@@ -277,12 +277,16 @@ def body(fout, iteration_obj, graphs):
             extract_positions(line, iteration_obj, graphs)
             generation_switch[3] = False
         
+        elif 'temperature           =' in line:
+            graphs.T = np.append(graphs.T, float(line.split()[2]))
+            generation_switch[4] = False
+        
         # Generation of the the text printed on the output file and performing the RDF calculation
         if not any(generation_switch):
             fout.writelines(["%s\n" % i for i in iteration_obj.single_frame()])
             graphs.extracting_values(iteration_obj)
             graphs.RDF()
-            generation_switch = [True] * 4
+            generation_switch = [True] * 5
 
 def xyz_gen(fout, fin, RDF_, groups):
     """
@@ -336,7 +340,8 @@ def xyz_gen(fout, fin, RDF_, groups):
     graphs.normalization(iteration_obj)
     graphs.plot_RDF()
     graphs.plot_energy()
-    graphs.plot_forces()
+    graphs.plot_forces(iteration_obj)
+    graphs.plot_temperature(iteration_obj)
 
 if __name__ == "__main__":
     # Extract setup information

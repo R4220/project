@@ -1,5 +1,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
+
+parameters = {'axes.labelsize': 16, 'xtick.labelsize': 14, 'ytick.labelsize': 14, 'legend.fontsize': 14}
+plt.rcParams.update(parameters)
+colors = ['#425840', '#9ACD32', '#b32323', '#191971', '#006400', '#b0edef', '#470303'] # 0DarkGrey, 1YellowGreen, 2FireBrick, 3MidnightBlue, 4Darkgreen, 5PaleTurquoise, 6Darkred
+
 
 class graph: # da modificare con i nuovi grafici
     """
@@ -71,7 +77,7 @@ class graph: # da modificare con i nuovi grafici
     """
 
 
-    def __init__(self, filename, Rmax, atoms, N): # da modificare con i nuovi grafici
+    def __init__(self, filename, Rmax, atoms, N_bin): # da modificare con i nuovi grafici
         """
         Initialize an instance of the 'Class_Name' class.
 
@@ -137,11 +143,11 @@ class graph: # da modificare con i nuovi grafici
 
         self.Rmax = Rmax
         self.type = atoms
-        self.N = N
-        self.count = np.zeros(N)
-        self.R = np.linspace(0, Rmax, N)
+        self.N_bin = N_bin
+        self.count = np.zeros(N_bin)
+        self.R = np.linspace(0, Rmax, N_bin)
         self.dR = self.R[1]
-        self.norm = np.multiply([((i + self.dR)**3 - i**3) for i in self.R[:N]], np.pi * 4 /3)
+        self.norm = np.multiply([((i + self.dR)**3 - i**3) for i in self.R[:N_bin]], np.pi * 4 /3)
         self.condition = (atoms[0] == atoms[1])
         self.at1 = np.array([], dtype=float).reshape(0, 3)
         self.N1 = 0
@@ -277,7 +283,7 @@ class graph: # da modificare con i nuovi grafici
         self.N1 = len(self.at1)
         self.N2 = len(self.at2)
 
-        self.count += np.histogram(dist, bins=self.N, range=(0, self.Rmax))[0]
+        self.count += np.histogram(dist, bins=self.N_bin, range=(0, self.Rmax))[0]
 
         # Reset the arrays for the next time step
         self.at1 = np.array([], dtype=float).reshape(0, 3)
@@ -384,9 +390,9 @@ class graph: # da modificare con i nuovi grafici
 
         The RDF plot will be saved as 'RDF_example.png'.
         """
-        fig = plt.figure(figsize=(8, 6))
+        fig = plt.figure(figsize=(10, 6.18033988769))
         ax = fig.add_subplot(1, 1, 1)
-        ax.plot(self.R, self.count, label='Power spectrum')
+        ax.plot(self.R, self.count, color = colors[3], label='Power spectrum')
         ax.set_xlabel('r ($A$)')
         ax.set_ylabel('g(r)')
         ax.grid()
@@ -413,24 +419,38 @@ class graph: # da modificare con i nuovi grafici
 
         The energy plot will be saved as 'E_example.png'.
         """
-        fig = plt.figure(figsize=(8, 6))
-        ax = fig.add_subplot(1, 1, 1)
-        ax.plot(self.time, self.Ek, label='Kinetic energy')
-        ax.plot(self.time, self.Up, label='Potential energy')
-        ax.set_xlabel('T (ps)')
-        ax.set_ylabel('E (eV)')
-        ax.grid()
-        ax.legend()
+        fig = plt.figure(figsize=(10, 6.18033988769))
+        axE = fig.add_subplot(1, 1, 1)
+        axU = axE.twinx()
+        
+        axU.plot(self.time, self.Up * 0.001, color = colors[3], label='Potential energy')
+        axE.plot(self.time, self.Ek * 0.001, color = colors[6], linewidth = 2,  label='Kinetic energy')
+        axE.plot(self.time, self.Ek * 0.001, color = colors[6], linewidth = 2,  label='Kinetic energy')
+        axE.set_xlabel('T (ps)')
+        axE.set_ylabel('E$_k$ (keV)')
+        axE.legend()
+        axE.set_xticklabels([str(int(tick)) for tick in axE.get_xticks()])
+        axE.xaxis.set_major_formatter(ticker.FormatStrFormatter('%.1f'))
+        axE.set_yticklabels([str(float(tick)) for tick in axE.get_yticks()])
+        axE.yaxis.set_major_formatter(ticker.FormatStrFormatter('%.1f'))
+
+        axU.set_ylabel('U (keV)')
+        axU.legend()
+        axU.set_yticklabels([str(float(tick)) for tick in axU.get_yticks()])
+        axU.yaxis.set_major_formatter(ticker.FormatStrFormatter('%.4f'))
+        #axE.grid(color=colors[0], linestyle='-')
+        #axU.grid(color=colors[0], linestyle='--')
+
         plt.savefig(f'E_{self.filename}.png')
 
 
-    def plot_forces(self):
+    def plot_forces(self, iteration_obj):
         """
         Plot the forces acting on the system in function of time.
 
         Notes
         -----
-        This method generates a plot of the forces (components along x, y, and z axes) acting on the system over time
+        This method generates a plot of the forces (components along x, y, and z acting on the system over time
         and saves it as an image file named 'F_{filename}.png'.
 
         Examples
@@ -442,7 +462,7 @@ class graph: # da modificare con i nuovi grafici
         instance.normalization(iteration_obj)  # Assuming there is an 'iteration_obj'
         instance.plot_forces()
         """
-        fig = plt.figure(figsize=(8, 15))
+        fig = plt.figure(figsize=(10, 3*6.18033988769 +2))
         
         #ax = fig.add_subplot(1, 1, 1)
         Fx = []
@@ -453,30 +473,91 @@ class graph: # da modificare con i nuovi grafici
                 Fy = np.append(Fy, f[1])
                 Fz = np.append(Fz, f[2])
 
-        ax = fig.add_subplot(3, 1, 1)
-        ax.plot(self.time, Fx, label='F$_x$')
-        ax.set_xlabel('T (ps)')
-        ax.set_ylabel('F (pN)')
-        ax.grid()
-        ax.legend()
+        axX = fig.add_subplot(3, 1, 1)
+        axX.plot(self.time, Fx * 0.001, color = colors[0], label='F$^{tot}_x$')
+        
+        axZ = fig.add_subplot(3, 1, 3)
+        axZ.plot(self.time, Fz * 0.001, color = colors[0],  label='F$^{tot}_z$')
 
-        ax = fig.add_subplot(3, 1, 2)
-        ax.plot(self.time, Fy, label='F$_y$')
-        ax.set_xlabel('T (ps)')
-        ax.set_ylabel('F (pN)')
-        ax.grid()
-        ax.legend()
+        axY = fig.add_subplot(3, 1, 2)
+        axY.plot(self.time, Fy * 0.001, color = colors[0],  label='F$^{tot}_y$')
 
-        ax = fig.add_subplot(3, 1, 3)
-        ax.plot(self.time, Fz, label='F$_z$')
-        ax.set_xlabel('T (ps)')
-        ax.set_ylabel('F (pN)')
-        ax.grid()
-        ax.legend()
+        for i, gr in enumerate(iteration_obj.groups):
+            Fx = []
+            Fy = []
+            Fz = []
+            for f in gr.Ftot_store:
+                Fx = np.append(Fx, f[0])
+                Fy = np.append(Fy, f[1])
+                Fz = np.append(Fz, f[2])
+            axX.plot(self.time, Fx * 0.001, color = colors[i+1],  label=f'{gr.id_group}$_x$')
+            axY.plot(self.time, Fy * 0.001, color = colors[i+1],  label=f'{gr.id_group}$_y$')
+            axZ.plot(self.time, Fz * 0.001, color = colors[i+1],  label=f'{gr.id_group}$_z$')
+
+        axX.set_xlabel('T (ps)')
+        axX.set_ylabel('F$_x$ (nN)')
+        axX.grid()
+        axX.legend()
+        axX.set_xticklabels([str(int(tick)) for tick in axX.get_xticks()])
+        axX.xaxis.set_major_formatter(ticker.FormatStrFormatter('%.1f'))
+        axX.set_yticklabels([str(float(tick)) for tick in axX.get_yticks()])
+        axX.yaxis.set_major_formatter(ticker.FormatStrFormatter('%.1f'))
+
+        axY.set_xlabel('T (ps)')
+        axY.set_ylabel('F$_y$ (nN)')
+        axY.grid()
+        axY.legend()
+        axY.set_xticklabels([str(int(tick)) for tick in axY.get_xticks()])
+        axY.xaxis.set_major_formatter(ticker.FormatStrFormatter('%.1f'))
+        axY.set_yticklabels([str(float(tick)) for tick in axY.get_yticks()])
+        axY.yaxis.set_major_formatter(ticker.FormatStrFormatter('%.1f'))
+
+        axZ.set_xlabel('T (ps)')
+        axZ.set_ylabel('F$_z$ (nN)')
+        axZ.grid()
+        axZ.legend()
+        axZ.set_xticklabels([str(int(tick)) for tick in axZ.get_xticks()])
+        axZ.xaxis.set_major_formatter(ticker.FormatStrFormatter('%.1f'))
+        axZ.set_yticklabels([str(float(tick)) for tick in axZ.get_yticks()])
+        axZ.yaxis.set_major_formatter(ticker.FormatStrFormatter('%.1f'))
         
         plt.savefig(f'F_{self.filename}.png')
 
 
+    def plot_temperature(self, iteration_obj):
+        """
+        Plot the temperature of the system in function of time.
 
+        Notes
+        -----
+        This method generates a plot of the temperature acting on the system over time
+        and saves it as an image file named 'T_{filename}.png'.
+
+        Examples
+        --------
+        instance = ClassName("example.txt", 10.0, ["Oxygen", "Oxygen"], 100)
+        instance.add_position1(1.0, 2.0, 3.0)
+        instance.add_position2(2.0, 3.0, 4.0)
+        instance.RDF()
+        instance.normalization(iteration_obj)  # Assuming there is an 'iteration_obj'
+        instance.plot_temperature()
+        """
+        fig = plt.figure(figsize=(10, 6.18033988769))
+        
+        ax = fig.add_subplot(1, 1, 1)
+        ax.plot(self.time, self.T, color = colors[0], label='T$^{tot}$')
+        for i, gr in enumerate(iteration_obj.groups):
+            ax.plot(self.time, gr.T, color = colors[i+1],  label=f'{gr.id_group}')
+
+        ax.set_xlabel('T (ps)')
+        ax.set_ylabel('T (K)')
+        ax.grid()
+        ax.legend()
+        ax.set_xticklabels([str(int(tick)) for tick in ax.get_xticks()])
+        ax.xaxis.set_major_formatter(ticker.FormatStrFormatter('%.1f'))
+        ax.set_yticklabels([str(float(tick)) for tick in ax.get_yticks()])
+        ax.yaxis.set_major_formatter(ticker.FormatStrFormatter('%.1f'))
+        
+        plt.savefig(f'T_{self.filename}.png')
 
         
